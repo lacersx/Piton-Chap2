@@ -1,8 +1,5 @@
-# Meminta nama file dari pengguna
-nama_file = input("Masukkan nama file (misalnya data.txt): ")
-
 try:
-    with open(nama_file, 'r') as file:
+    with open('data.txt', 'r') as file:
         # Membaca semua baris dan memisahkan berdasarkan koma
         array_data = [item.strip() for line in file for item in line.split(',')]
     
@@ -12,4 +9,4 @@ try:
         print(array_data)
 
 except FileNotFoundError:
-    print(f"File '{nama_file}' tidak ditemukan.") 
+    print(f"File '{data.txt}' tidak ditemukan.")
