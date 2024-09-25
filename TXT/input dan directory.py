@@ -10,3 +10,18 @@ def identifikasi_format(data):
     elif '=>' in data or ':' in data:
         return 'dictionary'
     return None
+
+def parsing_dictionary(data):
+    dictionary = {}
+    if '=>' in data:
+        pairs = data.split(',')
+        for pair in pairs:
+            key, value = pair.split('=>')
+            dictionary[key.strip()] = value.strip()
+    elif ':' in data:
+        pairs = data.split(';')
+        for pair in pairs:
+            key, value = pair.split(':')
+            dictionary[key.strip()] = value.strip()
+
+    return dictionary
