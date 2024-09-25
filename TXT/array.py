@@ -1,36 +1,15 @@
-# Membuat list kosong untuk menyimpan nama daerah
-daerah = []
+# Meminta nama file dari pengguna
+nama_file = input("Masukkan nama file (misalnya data.txt): ")
 
-# Meminta input daerah dari pengguna
-for _ in range(int(input("Berapa banyak daerah? "))):
-    daerah.append(input("Masukkan nama daerah: "))
-
-# Menampilkan daftar daerah
-print("\nDaftar daerah:", daerah)
-
-# Menampilkan pilihan untuk menambah atau menghapus daerah
-while True:
-    print("\nPilih opsi:")
-    print("1. Tambah daerah")
-    print("2. Hapus daerah")
-    print("3. Keluar")
-    pilihan = input("Masukkan pilihan (1/2/3): ")
-
-    if pilihan == "1":
-        daerah.append(input("Masukkan nama daerah baru: "))
-        print("Daftar setelah penambahan:", daerah)
-
-    elif pilihan == "2":
-        hapus = input("Masukkan nama daerah yang ingin dihapus: ")
-        if hapus in daerah:
-            daerah.remove(hapus)
-            print("Daftar setelah penghapusan:", daerah)
-        else:
-            print(f"Nama daerah {hapus} tidak ditemukan.")
+try:
+    with open(nama_file, 'r') as file:
+        # Membaca semua baris dan memisahkan berdasarkan koma
+        array_data = [item.strip() for line in file for item in line.split(',')]
     
-    elif pilihan == "3":
-        print("Keluar dari program.")
-        break
+    # Menampilkan data yang dibaca
+    if array_data:
+        print("Data yang dibaca dari file:")
+        print(array_data)
 
-    else:
-        print("Pilihan tidak valid, coba lagi.")
+except FileNotFoundError:
+    print(f"File '{nama_file}' tidak ditemukan.") 
