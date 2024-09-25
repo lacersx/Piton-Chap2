@@ -23,5 +23,4 @@ def parsing_dictionary(data):
         for pair in pairs:
             key, value = pair.split(':')
             dictionary[key.strip()] = value.strip()
-
     return dictionary
