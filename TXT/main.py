@@ -1,3 +1,6 @@
+from InD import baca_file, parsing_dictionary, identifikasi_format
+from pars_array import parsing_array
+
 def main():
     lokasi_file = input("Masukkan nama file: ")
 
