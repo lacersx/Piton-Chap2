@@ -28,3 +28,12 @@ def parsing_dictionary(data):
             key, value = pair.split(':')
             dictionary[key.strip()] = value.strip()
     return dictionary
+
+def parsing_array(data):
+    # Fungsi untuk memparsing data Array
+    if ',' in data:
+        array = data.split(',')
+    else:
+        array = data.split('\n')
+    
+    return array
