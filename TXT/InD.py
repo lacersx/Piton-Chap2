@@ -3,6 +3,9 @@ def baca_file(lokasi_file):
         with open(lokasi_file, 'r')as  file:
             data = file.read().strip()
         return data
+    except FileNotFoundError:
+        print(f"File'{lokasi_file}'tidak ditemukan. Silahkan masukan file yang benar")
+    return None
 
 def identifikasi_format(data):
     if ',' in data or '\n' in data:
