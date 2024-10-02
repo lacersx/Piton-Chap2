@@ -1,5 +1,7 @@
 from InD import baca_file, parsing_dictionary, identifikasi_format
-from pars_array import parsing_array
+from pars_array import hapus_data
+from up import tambah_data
+
 
 def main():
     lokasi_file = input("Masukkan nama file: ")
@@ -12,10 +14,7 @@ def main():
     # Identifikasi format
     format_file = identifikasi_format(data)
     
-    if format_file == 'array':
-        array = parsing_array(data)
-        print("Isi file sebagai Array:", array)
-    elif format_file == 'dictionary':
+    if format_file == 'dictionary':
         dictionary = parsing_dictionary(data)
         print("Isi file sebagai Dictionary:", dictionary)
     else:
