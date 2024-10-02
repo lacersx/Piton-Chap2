@@ -11,9 +11,9 @@ def hapus_data(nama_file):
     data_dict = parse_dictionary(data)
 
     jenis_data = "item"
-    if "Jenis_Makanan" in nama_file.lower():
-        jenis_data = "Jenis"
-    elif "Warna_Makanan" in nama_file.lower():
+    if "Kategori" in nama_file.lower():
+        jenis_data = "Kategori"
+    elif "Warna" in nama_file.lower():
         jenis_data = "Warna"
     elif "Makanan" in nama_file.lower():
         jenis_data = "Makanan"

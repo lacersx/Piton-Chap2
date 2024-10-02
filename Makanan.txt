@@ -1,0 +1,4 @@
+ID:Nama:Kategori:Warna
+1:Chiki Pedas:3
+2:Sayuran:2:2
+3:Kentang:4:1
