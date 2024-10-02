@@ -1,4 +1,4 @@
-ID:Kategori_makanan
+ID:Kategori
 1:Protein
 2:Mineral
 3:Snack
