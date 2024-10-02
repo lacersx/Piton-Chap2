@@ -1,0 +1,4 @@
+ID_Warna
+1:Kuning
+2:Hijau
+3:Merah4:pink
