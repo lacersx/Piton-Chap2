@@ -21,33 +21,35 @@ def main():
 
             if pilihan == '1':
                 isi = baca_file(lokasi_file="Data_Warna.txt")
-                print("Isi file warna:", isi)  # Debugging output
                 if isi is not None and isi.strip():
                     data_dict = parsing_dictionary(isi)
                     print("\nData yang dibaca adalah Dictionary:")
-                    print(data_dict)
+                    for key, value in data_dict.items():
+                        print(f"{key}: {value}")
                 else:
                     print("File tidak ditemukan atau kosong.")
-            
+
             elif pilihan == '2':
                 isi = baca_file(lokasi_file="Data_Kategori.txt")
-                print("Isi file kategori:", isi)  # Debugging output
                 if isi is not None and isi.strip():
                     data_dict = parsing_dictionary(isi)
                     print("\nData yang dibaca adalah Dictionary:")
-                    print(data_dict)
+                    for key, value in data_dict.items():
+                        print(f"{key}: {value}")
                 else:
                     print("File tidak ditemukan atau kosong.")
 
             elif pilihan == '3':  # Kode untuk melihat data makanan
                 isi = baca_file(lokasi_file="Data_Makanan.txt")
-                print("Isi file makanan:", isi)  # Debugging output
                 if isi is not None and isi.strip():
                     data_dict = parsing_dictionary(isi)
                     print("\nData yang dibaca adalah Dictionary:")
-                    print(data_dict)
+                    for key, value in data_dict.items():
+                        # Mengeluarkan tuple sebagai string dengan format yang diinginkan
+                        print(f"{key}: {', '.join(value)}")
                 else:
                     print("File tidak ditemukan atau kosong.")
+
         
         elif pilihan == '2':
             print("Pilih File yang ingin di tambah : ")

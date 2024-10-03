@@ -4,13 +4,15 @@ def tambah_data(nama_file):
         with open(nama_file, 'r') as file:
             lines = file.readlines()
             last_id = max(int(line.split(':')[0]) for line in lines[1:] if ':' in line)
-    except FileNotFoundError:
+    except FileNotFoundError:   
         last_id = 0
 
     value = input("Masukkan nama data: ")
     new_id = last_id + 1
 
     with open(nama_file, 'a') as file:
+        if not lines[-1].endswith('\n'):
+            file.write('\n')
         file.write(f"{new_id}:{value}\n")
     print(f"Data '{new_id}:{value}' berhasil ditambahkan ke {nama_file}")
 

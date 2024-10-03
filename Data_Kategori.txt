@@ -3,3 +3,4 @@ ID_Kategori
 2:Mineral
 3:Snack
 4:Karbohidrat
+5:segar
