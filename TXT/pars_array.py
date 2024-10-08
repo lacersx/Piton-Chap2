@@ -1,3 +1,6 @@
+import os
+from InD import baca_file, parsing_dictionary
+
 def hapus_data(nama_file):
     if not os.path.exists(nama_file):
         print(f"File {nama_file} tidak ditemukan.")
@@ -8,7 +11,7 @@ def hapus_data(nama_file):
         print(f"Gagal membaca file {nama_file}.")
         return
 
-    data_dict = parse_dictionary(data)
+    data_dict = parsing_dictionary(data)
 
     jenis_data = "item"
     if "Kategori" in nama_file.lower():
@@ -29,7 +32,5 @@ def hapus_data(nama_file):
         return
 
     del data_dict[id_hapus]
-
-    tulis_kembali_data(nama_file, data_dict, jenis_data)
 
     print(f"Data {jenis_data} dengan ID {id_hapus} berhasil dihapus.")

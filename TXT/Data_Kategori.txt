@@ -1,0 +1,6 @@
+ID_Kategori
+1:Protein
+2:Mineral
+3:Snack
+4:Karbohidrat
+5:segar
