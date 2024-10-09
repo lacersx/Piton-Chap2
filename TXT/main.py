@@ -1,6 +1,4 @@
-from InD import baca_file, parsing_dictionary, Data_Makanan
-from up import tambah_data
-from pars_array import hapus_data
+from InD import Baca, Up, Del, Makanan
 
 def main():
     # Muat data dari file saat aplikasi dimulai
@@ -20,9 +18,9 @@ def main():
             pilihan = input("Pilihan : ")
 
             if pilihan == '1':
-                isi = baca_file(lokasi_file="Data_Warna.txt")
+                isi = Baca.baca_file(lokasi_file="Data_Warna.txt")
                 if isi is not None and isi.strip():
-                    data_dict = parsing_dictionary(isi)
+                    data_dict = Up.parsing_dictionary(isi)
                     print("\nData yang dibaca adalah Dictionary:")
                     for key, value in data_dict.items():
                         print(f"{key}: {value}")
@@ -30,9 +28,9 @@ def main():
                     print("File tidak ditemukan atau kosong.")
 
             elif pilihan == '2':
-                isi = baca_file(lokasi_file="Data_Kategori.txt")
+                isi = Baca.baca_file(lokasi_file="Data_Kategori.txt")
                 if isi is not None and isi.strip():
-                    data_dict = parsing_dictionary(isi)
+                    data_dict = Up.parsing_dictionary(isi)
                     print("\nData yang dibaca adalah Dictionary:")
                     for key, value in data_dict.items():
                         print(f"{key}: {value}")
@@ -40,9 +38,9 @@ def main():
                     print("File tidak ditemukan atau kosong.")
 
             elif pilihan == '3':  # Kode untuk melihat data makanan
-                isi = baca_file(lokasi_file="Data_Makanan.txt")
+                isi = Baca.baca_file(lokasi_file="Data_Makanan.txt")
                 if isi is not None and isi.strip():
-                    data_dict = parsing_dictionary(isi)
+                    data_dict = Up.parsing_dictionary(isi)
                     print("\nData yang dibaca adalah Dictionary:")
                     for key, value in data_dict.items():
                         # Mengeluarkan tuple sebagai string dengan format yang diinginkan
@@ -57,10 +55,10 @@ def main():
             print("2. Data Kategori")
             pilihan = input("Pilihan : ")
             if pilihan == '1':
-                tambah_data(nama_file="Data_Warna.txt")
+                Up.tambah_data(nama_file="Data_Warna.txt")
                  
             elif pilihan == '2':
-                tambah_data(nama_file="Data_Kategori.txt")   
+                Up.tambah_data(nama_file="Data_Kategori.txt")   
 
         elif pilihan == '3':
             print("Pilih File yang ingin di hapus : ")
@@ -69,17 +67,17 @@ def main():
             print("3. Data Makanan")
             pilihan = input("Pilihan : ")
             if pilihan == '1':
-                hapus_data(nama_file="Data_Warna.txt")
+                Del.hapus_data(nama_file="Data_Warna.txt")
                  
             elif pilihan == '2':
-                hapus_data(nama_file="Data_Kategori.txt")
+                Del.hapus_data(nama_file="Data_Kategori.txt")
 
             elif pilihan == '3':
-                hapus_data(nama_file="Data_Makanan.txt")
+                Del.hapus_data(nama_file="Data_Makanan.txt")
 
         elif pilihan == '4':
             print("Data Makanan: ")  
-            Data_Makanan()
+            Makanan.Data_Makanan()
 
         elif pilihan == '5':
             print("Terima kasih telah menggunakan aplikasi!") 
