@@ -81,6 +81,7 @@ def clear_data():
 root = tk.Tk()
 root.title("Data Makanan")
 ungu = "#76608A"
+putih = "#FFFFFF"
 
 # Halaman
 halaman_awal = tk.Frame(root, bg=ungu)
@@ -94,34 +95,34 @@ halaman_warna.grid(row=0, column=0, sticky='news')
 halaman_tampilkan_data = tk.Frame(root, bg=ungu)
 halaman_tampilkan_data.grid(row=0, column=0, sticky='news')
 
-# Elemen UI
-tk.Label(halaman_awal, text="Masukkan Detail Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-tk.Button(halaman_awal, text="Masukkan Nama Makanan", command=lambda: switch_page(halaman_nama), bg="white").pack(pady=10)
+# Elemen UI dengan tampilan yang lebih menarik
+tk.Label(halaman_awal, text="Masukkan Detail Makanan", font=("Arial", 18, "bold"), bg=ungu, fg=putih).pack(pady=10)
+tk.Button(halaman_awal, text="Masukkan Nama Makanan", command=lambda: switch_page(halaman_nama), bg=putih, width=30).pack(pady=10)
 
-tk.Label(halaman_nama, text="Masukkan Nama Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-entry_nama = tk.Entry(halaman_nama)
+tk.Label(halaman_nama, text="Masukkan Nama Makanan", font=("Arial", 16), bg=ungu, fg=putih).pack(pady=10)
+entry_nama = tk.Entry(halaman_nama, font=("Arial", 14), width=30)
 entry_nama.pack(pady=10)
-tk.Button(halaman_nama, text="Lanjut", command=lambda: simpan_input('nama', entry_nama, halaman_kategori), bg="white").pack(pady=10)
+tk.Button(halaman_nama, text="Lanjut", command=lambda: simpan_input('nama', entry_nama, halaman_kategori), bg=putih, width=30).pack(pady=10)
 
-tk.Label(halaman_kategori, text="Masukkan Kategori Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-entry_kategori = tk.Entry(halaman_kategori)
+tk.Label(halaman_kategori, text="Masukkan Kategori Makanan", font=("Arial", 16), bg=ungu, fg=putih).pack(pady=10)
+entry_kategori = tk.Entry(halaman_kategori, font=("Arial", 14), width=30)
 entry_kategori.pack(pady=10)
-tk.Button(halaman_kategori, text="Lanjut", command=lambda: simpan_input('kategori', entry_kategori, halaman_warna), bg="white").pack(pady=10)
+tk.Button(halaman_kategori, text="Lanjut", command=lambda: simpan_input('kategori', entry_kategori, halaman_warna), bg=putih, width=30).pack(pady=10)
 
-tk.Label(halaman_warna, text="Masukkan Warna Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-entry_warna = tk.Entry(halaman_warna)
+tk.Label(halaman_warna, text="Masukkan Warna Makanan", font=("Arial", 16), bg=ungu, fg=putih).pack(pady=10)
+entry_warna = tk.Entry(halaman_warna, font=("Arial", 14), width=30)
 entry_warna.pack(pady=10)
-tk.Button(halaman_warna, text="Lanjut", command=lambda: simpan_input('warna', entry_warna, halaman_tampilkan_data), bg="white").pack(pady=10)
+tk.Button(halaman_warna, text="Lanjut", command=lambda: simpan_input('warna', entry_warna, halaman_tampilkan_data), bg=putih, width=30).pack(pady=10)
 
-tk.Label(halaman_tampilkan_data, text="Data Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-tk.Button(halaman_tampilkan_data, text="Simpan Data", command=simpan_data, bg="white").pack(pady=10)
-listbox = tk.Listbox(halaman_tampilkan_data, width=50)
+tk.Label(halaman_tampilkan_data, text="Data Makanan", font=("Arial", 18, "bold"), bg=ungu, fg=putih).pack(pady=10)
+tk.Button(halaman_tampilkan_data, text="Simpan Data", command=simpan_data, bg=putih, width=30).pack(pady=10)
+listbox = tk.Listbox(halaman_tampilkan_data, width=50, font=("Arial", 12))
 listbox.pack(pady=10)
-tk.Button(halaman_tampilkan_data, text="Hapus Data", command=hapus_data, bg="white").pack(pady=10)
-tk.Button(halaman_tampilkan_data, text="Edit Data", command=edit_data, bg="white").pack(pady=10)
+tk.Button(halaman_tampilkan_data, text="Hapus Data", command=hapus_data, bg=putih, width=30).pack(pady=10)
+tk.Button(halaman_tampilkan_data, text="Edit Data", command=edit_data, bg=putih, width=30).pack(pady=10)
 
 # Tombol untuk Isi Data Baru di bawah Edit Data
-tk.Button(halaman_tampilkan_data, text="Isi Data Baru", command=lambda: switch_page(halaman_nama), bg="white").pack(pady=10)
+tk.Button(halaman_tampilkan_data, text="Isi Data Baru", command=lambda: switch_page(halaman_nama), bg=putih, width=30).pack(pady=10)
 
 # Navigasi halaman
 def switch_page(page):
