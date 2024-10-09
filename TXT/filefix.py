@@ -1,17 +1,89 @@
 import tkinter as tk
 from tkinter import messagebox
 import sqlite3
+import os
 
 # Koneksi ke database
 conn = sqlite3.connect('makanan.db')
 c = conn.cursor()
 # Drop the table if it exists and create it again
-c.execute('''DROP TABLE IF EXISTS makanan''')  # Drop the table to avoid schema issues
+c.execute('''DROP TABLE IF EXISTS makanan''')
 c.execute('''CREATE TABLE IF NOT EXISTS makanan (id INTEGER PRIMARY KEY AUTOINCREMENT, nama TEXT, kategori TEXT, warna TEXT)''')
 conn.commit()
 
-data_makanan = {'nama': '', 'kategori': '', 'warna': ''}  # Initialize properly
+data_makanan = {'nama': '', 'kategori': '', 'warna': ''}
 selected_id = None
+
+class Baca:
+    @staticmethod
+    def baca_file(lokasi_file):
+        try:
+            with open(lokasi_file, 'r') as file:
+                data = file.read().strip()
+            return data
+        except FileNotFoundError:
+            print(f"File {lokasi_file} tidak ditemukan.")
+            return None
+
+class Up:
+    @staticmethod
+    def parsing_dictionary(data):
+        dict_result = {}
+        lines = data.splitlines()
+
+        for line in lines[1:]:
+            parts = line.split(':')
+            if len(parts) == 2:
+                key = parts[0].strip()
+                value = parts[1].strip()
+                dict_result[key] = value
+            elif len(parts) == 4:
+                key = parts[0].strip()
+                value = tuple(parts[1:])
+                dict_result[key] = value
+            else:
+                print(f"Data tidak valid pada baris: {line}")
+    
+        return dict_result
+
+    @staticmethod
+    def baca_id_terakhir(nama_file):
+        if not os.path.exists(nama_file):
+            return 0
+        with open(nama_file, 'r') as file:
+            lines = file.readlines()
+            if len(lines) > 1:
+                last_line = lines[-1].strip()
+                if ':' in last_line:
+                    return int(last_line.split(':')[0])
+        return 0
+
+class Del:
+    @staticmethod
+    def hapus_data(nama_file):
+        if not os.path.exists(nama_file):
+            print(f"File {nama_file} tidak ditemukan.")
+            return
+
+        data = Baca.baca_file(nama_file)
+        if data is None:
+            print(f"Gagal membaca file {nama_file}.")
+            return
+
+        data_dict = Up.parsing_dictionary(data)
+
+        print("Data yang tersedia:")
+        for id_item, info_item in data_dict.items():
+            print(f"ID: {id_item}, Info: {info_item}")
+
+        id_hapus = input("Masukkan ID yang akan dihapus: ")
+
+        if id_hapus not in data_dict:
+            print(f"ID {id_hapus} tidak ditemukan.")
+            return
+
+        del data_dict[id_hapus]
+        print(f"Data dengan ID {id_hapus} berhasil dihapus.")
 
 # Fungsi utama: tambah, edit, hapus, dan tampilkan data
 def simpan_data():
@@ -116,21 +188,20 @@ tk.Button(halaman_warna, text="Lanjut", command=lambda: simpan_input('warna', en
 
 tk.Label(halaman_tampilkan_data, text="Data Makanan", font=("Arial", 18, "bold"), bg=ungu, fg=putih).pack(pady=10)
 tk.Button(halaman_tampilkan_data, text="Simpan Data", command=simpan_data, bg=putih, width=30).pack(pady=10)
-listbox = tk.Listbox(halaman_tampilkan_data, width=50, font=("Arial", 12))
-listbox.pack(pady=10)
+tk.Button(halaman_tampilkan_data, text="Tambah Data Baru", command=lambda: switch_page(halaman_nama), bg=putih, width=30).pack(pady=10)
 tk.Button(halaman_tampilkan_data, text="Hapus Data", command=hapus_data, bg=putih, width=30).pack(pady=10)
 tk.Button(halaman_tampilkan_data, text="Edit Data", command=edit_data, bg=putih, width=30).pack(pady=10)
 
-# Tombol untuk Isi Data Baru di bawah Edit Data
-tk.Button(halaman_tampilkan_data, text="Isi Data Baru", command=lambda: switch_page(halaman_nama), bg=putih, width=30).pack(pady=10)
+listbox = tk.Listbox(halaman_tampilkan_data, font=("Arial", 14), width=50)
+listbox.pack(pady=10)
 
-# Navigasi halaman
 def switch_page(page):
     page.tkraise()
 
-# Menampilkan halaman awal
-switch_page(halaman_awal)
-tampilkan_data()
+tampilkan_data()  # Menampilkan data saat aplikasi pertama kali dijalankan
+switch_page(halaman_awal)  # Mulai di halaman awal
 
 root.mainloop()
+
+# Tutup koneksi database saat aplikasi ditutup
 conn.close()
