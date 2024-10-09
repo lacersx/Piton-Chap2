@@ -15,7 +15,6 @@ data_makanan = {'nama': '', 'kategori': '', 'warna': ''}
 selected_id = None
 
 class Baca:
-    @staticmethod
     def baca_file(lokasi_file):
         try:
             with open(lokasi_file, 'r') as file:
@@ -26,7 +25,6 @@ class Baca:
             return None
 
 class Up:
-    @staticmethod
     def parsing_dictionary(data):
         dict_result = {}
         lines = data.splitlines()
@@ -46,7 +44,6 @@ class Up:
     
         return dict_result
 
-    @staticmethod
     def baca_id_terakhir(nama_file):
         if not os.path.exists(nama_file):
             return 0
@@ -59,7 +56,6 @@ class Up:
         return 0
 
 class Del:
-    @staticmethod
     def hapus_data(nama_file):
         if not os.path.exists(nama_file):
             print(f"File {nama_file} tidak ditemukan.")
