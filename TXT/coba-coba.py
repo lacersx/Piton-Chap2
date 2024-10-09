@@ -5,144 +5,99 @@ import sqlite3
 # Koneksi ke database
 conn = sqlite3.connect('makanan.db')
 c = conn.cursor()
-c.execute('''
-CREATE TABLE IF NOT EXISTS makanan (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nama_makanan TEXT, kategori TEXT, warna TEXT
-)
-''')
+c.execute('''CREATE TABLE IF NOT EXISTS makanan (id INTEGER PRIMARY KEY, nama TEXT, kategori TEXT, warna TEXT)''')
 conn.commit()
 
-data_makanan = {}
-selected_id = None  # Untuk menyimpan id data yang sedang diedit
+data_makanan, selected_id = {}, None
 
-# Fungsi tambah data
-def tambah_data():
+# Fungsi utama: tambah, edit, hapus, dan tampilkan data
+def simpan_data():
     if all(data_makanan.values()):
-        if selected_id:  # Jika sedang dalam mode edit
-            c.execute("UPDATE makanan SET nama_makanan=?, kategori=?, warna=? WHERE id=?",
+        if selected_id:
+            c.execute("UPDATE makanan SET nama=?, kategori=?, warna=? WHERE id=?", 
                       (data_makanan['nama'], data_makanan['kategori'], data_makanan['warna'], selected_id))
-            messagebox.showinfo("Sukses", "Data berhasil diperbarui!")
         else:
-            c.execute("INSERT INTO makanan (nama_makanan, kategori, warna) VALUES (?, ?, ?)",
+            c.execute("INSERT INTO makanan (nama, kategori, warna) VALUES (?, ?, ?)", 
                       (data_makanan['nama'], data_makanan['kategori'], data_makanan['warna']))
-            messagebox.showinfo("Sukses", "Data berhasil ditambahkan!")
         conn.commit()
-        clear_data()
-        tampilkan_data()
-        switch_page(halaman_awal)
+        clear_data(), tampilkan_data()
     else:
-        messagebox.showwarning("Input Error", "Lengkapi semua data")
-
-# Fungsi tampilkan dan hapus data
-def tampilkan_data():
-    listbox.delete(0, tk.END)
-    for row in c.execute("SELECT * FROM makanan"):
-        listbox.insert(tk.END, f"{row[0]} - {row[1]} ({row[2]}, {row[3]})")
+        messagebox.showwarning("Input Error", "Lengkapi semua data!")
 
 def hapus_data():
     try:
         selected = listbox.curselection()[0]
         c.execute("DELETE FROM makanan WHERE id=?", (listbox.get(selected).split()[0],))
-        conn.commit()
-        tampilkan_data()
+        conn.commit(), tampilkan_data()
     except IndexError:
-        messagebox.showwarning("Selection Error", "Pilih data yang ingin dihapus")
+        messagebox.showwarning("Pilih Data", "Pilih data yang ingin dihapus!")
 
 def edit_data():
+    global selected_id
     try:
-        global selected_id
         selected = listbox.curselection()[0]
-        selected_id = listbox.get(selected).split()[0]  # Mengambil ID dari data yang dipilih
-
-        # Mendapatkan data dari database berdasarkan ID
+        selected_id = listbox.get(selected).split()[0]
         c.execute("SELECT * FROM makanan WHERE id=?", (selected_id,))
         row = c.fetchone()
-        
-        # Mengisi input field dengan data yang dipilih
-        entry_nama.delete(0, tk.END)
-        entry_nama.insert(0, row[1])
-        entry_kategori.delete(0, tk.END)
-        entry_kategori.insert(0, row[2])
-        entry_warna.delete(0, tk.END)
-        entry_warna.insert(0, row[3])
-
-        # Beralih ke halaman input untuk mengedit data
+        entry_nama.delete(0, tk.END), entry_kategori.delete(0, tk.END), entry_warna.delete(0, tk.END)
+        entry_nama.insert(0, row[1]), entry_kategori.insert(0, row[2]), entry_warna.insert(0, row[3])
         switch_page(halaman_nama)
     except IndexError:
-        messagebox.showwarning("Selection Error", "Pilih data yang ingin diedit")
+        messagebox.showwarning("Pilih Data", "Pilih data yang ingin diedit!")
 
-# Navigasi halaman
-def switch_page(page):
-    page.tkraise()
+def tampilkan_data():
+    listbox.delete(0, tk.END)
+    for row in c.execute("SELECT * FROM makanan"):
+        listbox.insert(tk.END, f"{row[0]} - {row[1]} ({row[2]}, {row[3]})")
 
-# Simpan input sementara
 def simpan_input(key, entry, next_page):
     data_makanan[key] = entry.get()
-    if data_makanan[key]:
-        switch_page(next_page)
-    else:
-        messagebox.showwarning("Input Error", f"{key.capitalize()} tidak boleh kosong")
+    switch_page(next_page) if data_makanan[key] else messagebox.showwarning("Input Error", f"{key.capitalize()} tidak boleh kosong!")
 
 def clear_data():
     global data_makanan, selected_id
-    data_makanan = {}
-    selected_id = None  # Reset ID yang dipilih setelah proses edit selesai
+    data_makanan, selected_id = {}, None
 
 # Setup GUI
-root = tk.Tk()
-root.title("Data Makanan")
-
-# Warna ungu yang digunakan
+root = tk.Tk(); root.title("Data Makanan")
 ungu = "#76608A"
 
-# Membuat frame untuk setiap halaman dan menerapkan warna ungu
-halaman_awal = tk.Frame(root, bg=ungu)
-halaman_awal.grid(row=0, column=0, sticky='news')
+# Halaman
+halaman_awal = tk.Frame(root, bg=ungu); halaman_awal.grid(row=0, column=0, sticky='news')
+halaman_nama = tk.Frame(root, bg=ungu); halaman_nama.grid(row=0, column=0, sticky='news')
+halaman_kategori = tk.Frame(root, bg=ungu); halaman_kategori.grid(row=0, column=0, sticky='news')
+halaman_warna = tk.Frame(root, bg=ungu); halaman_warna.grid(row=0, column=0, sticky='news')
+halaman_tampilkan_data = tk.Frame(root, bg=ungu); halaman_tampilkan_data.grid(row=0, column=0, sticky='news')
 
-halaman_nama = tk.Frame(root, bg=ungu)
-halaman_nama.grid(row=0, column=0, sticky='news')
-
-halaman_kategori = tk.Frame(root, bg=ungu)
-halaman_kategori.grid(row=0, column=0, sticky='news')
-
-halaman_warna = tk.Frame(root, bg=ungu)
-halaman_warna.grid(row=0, column=0, sticky='news')
-
-halaman_tampilkan_data = tk.Frame(root, bg=ungu)
-halaman_tampilkan_data.grid(row=0, column=0, sticky='news')
-
-# --- Halaman Awal ---
+# Elemen UI
 tk.Label(halaman_awal, text="Masukkan Detail Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
 tk.Button(halaman_awal, text="Masukkan Nama Makanan", command=lambda: switch_page(halaman_nama), bg="white").pack(pady=10)
 
-# --- Halaman Nama ---
 tk.Label(halaman_nama, text="Masukkan Nama Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-entry_nama = tk.Entry(halaman_nama)
-entry_nama.pack(pady=10)
+entry_nama = tk.Entry(halaman_nama); entry_nama.pack(pady=10)
 tk.Button(halaman_nama, text="Lanjut", command=lambda: simpan_input('nama', entry_nama, halaman_kategori), bg="white").pack(pady=10)
 
-# --- Halaman Kategori ---
 tk.Label(halaman_kategori, text="Masukkan Kategori Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-entry_kategori = tk.Entry(halaman_kategori)
-entry_kategori.pack(pady=10)
+entry_kategori = tk.Entry(halaman_kategori); entry_kategori.pack(pady=10)
 tk.Button(halaman_kategori, text="Lanjut", command=lambda: simpan_input('kategori', entry_kategori, halaman_warna), bg="white").pack(pady=10)
 
-# --- Halaman Warna ---
 tk.Label(halaman_warna, text="Masukkan Warna Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-entry_warna = tk.Entry(halaman_warna)
-entry_warna.pack(pady=10)
+entry_warna = tk.Entry(halaman_warna); entry_warna.pack(pady=10)
 tk.Button(halaman_warna, text="Lanjut", command=lambda: simpan_input('warna', entry_warna, halaman_tampilkan_data), bg="white").pack(pady=10)
 
-# --- Halaman Tampilkan Data ---
 tk.Label(halaman_tampilkan_data, text="Data Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-tk.Button(halaman_tampilkan_data, text="Simpan Data", command=tambah_data, bg="white").pack(pady=10)
-listbox = tk.Listbox(halaman_tampilkan_data, width=50)
-listbox.pack(pady=10)
+tk.Button(halaman_tampilkan_data, text="Simpan Data", command=simpan_data, bg="white").pack(pady=10)
+listbox = tk.Listbox(halaman_tampilkan_data, width=50); listbox.pack(pady=10)
 tk.Button(halaman_tampilkan_data, text="Hapus Data", command=hapus_data, bg="white").pack(pady=10)
-tk.Button(halaman_tampilkan_data, text="Edit Data", command=edit_data, bg="white").pack(pady=10)  # Tombol Edit Data
+tk.Button(halaman_tampilkan_data, text="Edit Data", command=edit_data, bg="white").pack(pady=10)
 
-# Menampilkan halaman awal saat aplikasi pertama kali dijalankan
+# Tombol untuk Isi Data Baru di bawah Edit Data
+tk.Button(halaman_tampilkan_data, text="Isi Data Baru", command=lambda: switch_page(halaman_nama), bg="white").pack(pady=10)
+
+# Navigasi halaman
+def switch_page(page): page.tkraise()
+
+# Menampilkan halaman awal
 switch_page(halaman_awal)
 tampilkan_data()
 
