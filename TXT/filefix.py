@@ -15,6 +15,7 @@ c.execute('''CREATE TABLE IF NOT EXISTS makanan (
 
 # Variabel global untuk menyimpan input dari tiap window
 data_makanan = {'nama': '', 'kategori': '', 'warna': ''}
+selected_id = None  # Variabel untuk menyimpan ID makanan yang dipilih saat mengedit
 
 # Fungsi untuk menambah data ke dalam database setelah semua input diterima
 def tambah_data_ke_db():
@@ -23,12 +24,18 @@ def tambah_data_ke_db():
     warna = data_makanan['warna']
     
     if nama and kategori and warna:
-        c.execute("INSERT INTO makanan (nama, kategori, warna) VALUES (?, ?, ?)", (nama, kategori, warna))
+        if selected_id:  # Jika sedang mengedit, update data
+            c.execute("UPDATE makanan SET nama=?, kategori=?, warna=? WHERE id=?", 
+                      (nama, kategori, warna, selected_id))
+        else:  # Jika menambah data baru
+            c.execute("INSERT INTO makanan (nama, kategori, warna) VALUES (?, ?, ?)", 
+                      (nama, kategori, warna))
         conn.commit()
         tampilkan_data()
         data_makanan['nama'] = ''
         data_makanan['kategori'] = ''
         data_makanan['warna'] = ''
+        reset_selected_id()
     else:
         messagebox.showwarning("Input Error", "Semua field harus diisi!")
 
@@ -49,8 +56,31 @@ def tampilkan_data():
     for row in c.execute("SELECT * FROM makanan"):
         listbox.insert(tk.END, f"{row[0]} - {row[1]} ({row[2]}, {row[3]})")
 
+# Fungsi untuk mengedit data yang dipilih
+def edit_data():
+    global selected_id
+    try:
+        selected = listbox.curselection()[0]
+        makanan_data = listbox.get(selected).split()
+        selected_id = makanan_data[0]  # Ambil ID
+        
+        # Ambil data dari database berdasarkan ID yang dipilih
+        c.execute("SELECT * FROM makanan WHERE id=?", (selected_id,))
+        makanan = c.fetchone()
+        
+        # Simpan data ke dalam variabel global dan buka window edit
+        data_makanan['nama'] = makanan[1]
+        data_makanan['kategori'] = makanan[2]
+        data_makanan['warna'] = makanan[3]
+        
+        # Buka window untuk mengedit nama
+        input_nama_window(is_edit=True)
+        
+    except IndexError:
+        messagebox.showwarning("Pilih Data", "Pilih data yang ingin diedit!")
+
 # Fungsi untuk membuka window input kategori
-def input_kategori_window():
+def input_kategori_window(is_edit=False):
     window = tk.Toplevel(root)
     window.title("Input Kategori Makanan")
     window.geometry("300x200")
@@ -60,6 +90,7 @@ def input_kategori_window():
     label.pack(pady=10)
     
     entry = tk.Entry(window, font=("Arial", 12))
+    entry.insert(0, data_makanan['kategori'])  # Isi dengan data sebelumnya jika sedang mengedit
     entry.pack(pady=10)
     
     def lanjutkan():
@@ -67,7 +98,7 @@ def input_kategori_window():
         if kategori:
             data_makanan['kategori'] = kategori
             window.destroy()
-            input_warna_window()  # Lanjut ke input warna
+            input_warna_window(is_edit)  # Lanjut ke input warna
         else:
             messagebox.showwarning("Input Error", "Kategori harus diisi!")
     
@@ -75,7 +106,7 @@ def input_kategori_window():
     button.pack(pady=10)
 
 # Fungsi untuk membuka window input warna
-def input_warna_window():
+def input_warna_window(is_edit=False):
     window = tk.Toplevel(root)
     window.title("Input Warna Makanan")
     window.geometry("300x200")
@@ -85,6 +116,7 @@ def input_warna_window():
     label.pack(pady=10)
     
     entry = tk.Entry(window, font=("Arial", 12))
+    entry.insert(0, data_makanan['warna'])  # Isi dengan data sebelumnya jika sedang mengedit
     entry.pack(pady=10)
     
     def lanjutkan():
@@ -100,7 +132,7 @@ def input_warna_window():
     button.pack(pady=10)
 
 # Fungsi untuk membuka window input nama
-def input_nama_window():
+def input_nama_window(is_edit=False):
     window = tk.Toplevel(root)
     window.title("Input Nama Makanan")
     window.geometry("300x200")
@@ -110,6 +142,7 @@ def input_nama_window():
     label.pack(pady=10)
     
     entry = tk.Entry(window, font=("Arial", 12))
+    entry.insert(0, data_makanan['nama'])  # Isi dengan data sebelumnya jika sedang mengedit
     entry.pack(pady=10)
     
     def lanjutkan():
@@ -117,12 +150,22 @@ def input_nama_window():
         if nama:
             data_makanan['nama'] = nama
             window.destroy()
-            input_kategori_window()  # Lanjut ke input kategori
+            input_kategori_window(is_edit)  # Lanjut ke input kategori
         else:
             messagebox.showwarning("Input Error", "Nama harus diisi!")
     
     button = tk.Button(window, text="Lanjut", command=lanjutkan, bg="white")
     button.pack(pady=10)
+
+# Fungsi untuk mereset ID yang dipilih saat selesai edit
+def reset_selected_id():
+    global selected_id
+    selected_id = None
+
+# Fungsi untuk menutup aplikasi
+def tutup_aplikasi():
+    conn.close()  # Tutup koneksi database sebelum menutup aplikasi
+    root.quit()  # Tutup aplikasi
 
 # Membuat GUI utama
 root = tk.Tk()
@@ -145,6 +188,14 @@ button_tambah.grid(row=0, column=0, pady=10)
 # Tombol untuk menghapus data
 button_hapus = tk.Button(frame_form, text="Hapus", command=hapus_data, width=15, bg="white")
 button_hapus.grid(row=0, column=1, pady=10)
+
+# Tombol untuk mengedit data
+button_edit = tk.Button(frame_form, text="Edit", command=edit_data, width=15, bg="white")
+button_edit.grid(row=0, column=2, pady=10)
+
+# Tombol untuk menutup aplikasi
+button_tutup = tk.Button(frame_form, text="Tutup Aplikasi", command=tutup_aplikasi, width=15, bg="white")
+button_tutup.grid(row=0, column=3, pady=10)
 
 # Listbox untuk menampilkan data makanan
 label_list = tk.Label(frame_list, text="Data Makanan", font=("Arial", 14, "bold"), bg="#76608A", fg="white")
