@@ -6,9 +6,58 @@ import os
 # Koneksi ke database
 conn = sqlite3.connect('makanan.db')
 c = conn.cursor()
-# Drop the table if it exists and create it again
+
+# Drop the tables if they exist and create them again
 c.execute('''DROP TABLE IF EXISTS makanan''')
-c.execute('''CREATE TABLE IF NOT EXISTS makanan (id INTEGER PRIMARY KEY AUTOINCREMENT, nama TEXT, kategori TEXT, warna TEXT)''')
+c.execute('''DROP TABLE IF EXISTS kategori''')
+c.execute('''DROP TABLE IF EXISTS warna''')
+
+c.execute('''CREATE TABLE IF NOT EXISTS makanan (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                nama TEXT, 
+                kategori TEXT, 
+                warna TEXT)''')
+
+c.execute('''CREATE TABLE IF NOT EXISTS kategori (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                nama TEXT)''')
+
+c.execute('''CREATE TABLE IF NOT EXISTS warna (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                nama TEXT)''')
+
+# Inisialisasi data kategori
+kategori_data = [
+    (1, 'Protein'),
+    (2, 'Mineral'),
+    (3, 'Snack'),
+    (4, 'Karbohidrat'),
+    (5, 'Segar')
+]
+
+# Inisialisasi data warna
+warna_data = [
+    (1, 'Kuning'),
+    (2, 'Hijau'),
+    (3, 'Merah'),
+    (4, 'Biru')
+]
+
+# Inisialisasi data makanan
+makanan_data = [
+    (1, 'Chiki Pedas', 'Snack', 'Hijau'),
+    (2, 'Sayuran', 'Mineral', 'Hijau'),
+    (3, 'Kentang', 'Protein', 'Merah'),
+    (4, 'Mie', 'Snack', 'Hijau')
+]
+
+# Masukkan data kategori dan warna ke database
+c.executemany("INSERT INTO kategori (id, nama) VALUES (?, ?)", kategori_data)
+c.executemany("INSERT INTO warna (id, nama) VALUES (?, ?)", warna_data)
+
+# Masukkan data makanan ke database
+c.executemany("INSERT INTO makanan (id, nama, kategori, warna) VALUES (?, ?, ?, ?)", makanan_data)
+
 conn.commit()
 
 data_makanan = {'nama': '', 'kategori': '', 'warna': ''}
