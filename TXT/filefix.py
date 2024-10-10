@@ -13,17 +13,22 @@ c.execute('''CREATE TABLE IF NOT EXISTS makanan (
                 kategori TEXT, 
                 warna TEXT)''')
 
-# Fungsi untuk menambah data ke dalam database
-def tambah_data():
-    nama = entry_nama.get()
-    kategori = entry_kategori.get()
-    warna = entry_warna.get()
+# Variabel global untuk menyimpan input dari tiap window
+data_makanan = {'nama': '', 'kategori': '', 'warna': ''}
+
+# Fungsi untuk menambah data ke dalam database setelah semua input diterima
+def tambah_data_ke_db():
+    nama = data_makanan['nama']
+    kategori = data_makanan['kategori']
+    warna = data_makanan['warna']
     
     if nama and kategori and warna:
         c.execute("INSERT INTO makanan (nama, kategori, warna) VALUES (?, ?, ?)", (nama, kategori, warna))
         conn.commit()
         tampilkan_data()
-        clear_entries()
+        data_makanan['nama'] = ''
+        data_makanan['kategori'] = ''
+        data_makanan['warna'] = ''
     else:
         messagebox.showwarning("Input Error", "Semua field harus diisi!")
 
@@ -38,38 +43,88 @@ def hapus_data():
     except IndexError:
         messagebox.showwarning("Pilih Data", "Pilih data yang ingin dihapus!")
 
-# Fungsi untuk mengedit data
-def edit_data():
-    try:
-        selected = listbox.curselection()[0]
-        makanan_id = listbox.get(selected).split()[0]  # ambil ID
-        nama = entry_nama.get()
-        kategori = entry_kategori.get()
-        warna = entry_warna.get()
-        
-        if nama and kategori and warna:
-            c.execute("UPDATE makanan SET nama=?, kategori=?, warna=? WHERE id=?", (nama, kategori, warna, makanan_id))
-            conn.commit()
-            tampilkan_data()
-            clear_entries()
-        else:
-            messagebox.showwarning("Input Error", "Semua field harus diisi!")
-    except IndexError:
-        messagebox.showwarning("Pilih Data", "Pilih data yang ingin diedit!")
-
 # Fungsi untuk menampilkan data di listbox
 def tampilkan_data():
     listbox.delete(0, tk.END)
     for row in c.execute("SELECT * FROM makanan"):
         listbox.insert(tk.END, f"{row[0]} - {row[1]} ({row[2]}, {row[3]})")
 
-# Fungsi untuk membersihkan input
-def clear_entries():
-    entry_nama.delete(0, tk.END)
-    entry_kategori.delete(0, tk.END)
-    entry_warna.delete(0, tk.END)
+# Fungsi untuk membuka window input kategori
+def input_kategori_window():
+    window = tk.Toplevel(root)
+    window.title("Input Kategori Makanan")
+    window.geometry("300x200")
+    window.configure(bg="#76608A")  # Warna latar belakang sama
+    
+    label = tk.Label(window, text="Masukkan Kategori", font=("Arial", 12), bg="#76608A", fg="white")
+    label.pack(pady=10)
+    
+    entry = tk.Entry(window, font=("Arial", 12))
+    entry.pack(pady=10)
+    
+    def lanjutkan():
+        kategori = entry.get()
+        if kategori:
+            data_makanan['kategori'] = kategori
+            window.destroy()
+            input_warna_window()  # Lanjut ke input warna
+        else:
+            messagebox.showwarning("Input Error", "Kategori harus diisi!")
+    
+    button = tk.Button(window, text="Lanjut", command=lanjutkan, bg="white")
+    button.pack(pady=10)
 
-# Membuat GUI
+# Fungsi untuk membuka window input warna
+def input_warna_window():
+    window = tk.Toplevel(root)
+    window.title("Input Warna Makanan")
+    window.geometry("300x200")
+    window.configure(bg="#76608A")  # Warna latar belakang sama
+    
+    label = tk.Label(window, text="Masukkan Warna", font=("Arial", 12), bg="#76608A", fg="white")
+    label.pack(pady=10)
+    
+    entry = tk.Entry(window, font=("Arial", 12))
+    entry.pack(pady=10)
+    
+    def lanjutkan():
+        warna = entry.get()
+        if warna:
+            data_makanan['warna'] = warna
+            window.destroy()
+            tambah_data_ke_db()  # Simpan data dan kembali ke tampilan utama
+        else:
+            messagebox.showwarning("Input Error", "Warna harus diisi!")
+    
+    button = tk.Button(window, text="Selesai", command=lanjutkan, bg="white")
+    button.pack(pady=10)
+
+# Fungsi untuk membuka window input nama
+def input_nama_window():
+    window = tk.Toplevel(root)
+    window.title("Input Nama Makanan")
+    window.geometry("300x200")
+    window.configure(bg="#76608A")  # Warna latar belakang sama
+    
+    label = tk.Label(window, text="Masukkan Nama Makanan", font=("Arial", 12), bg="#76608A", fg="white")
+    label.pack(pady=10)
+    
+    entry = tk.Entry(window, font=("Arial", 12))
+    entry.pack(pady=10)
+    
+    def lanjutkan():
+        nama = entry.get()
+        if nama:
+            data_makanan['nama'] = nama
+            window.destroy()
+            input_kategori_window()  # Lanjut ke input kategori
+        else:
+            messagebox.showwarning("Input Error", "Nama harus diisi!")
+    
+    button = tk.Button(window, text="Lanjut", command=lanjutkan, bg="white")
+    button.pack(pady=10)
+
+# Membuat GUI utama
 root = tk.Tk()
 root.title("Data Makanan")
 root.geometry("600x500")
@@ -83,34 +138,13 @@ frame_form.pack(padx=20, pady=10)
 frame_list = tk.Frame(root, bg="#76608A")
 frame_list.pack(padx=20, pady=10)
 
-# Label dan Entry untuk input data makanan
-label_nama = tk.Label(frame_form, text="Nama Makanan", font=("Arial", 12), bg="#76608A", fg="white")
-label_nama.grid(row=0, column=0, sticky="w", pady=5)
-entry_nama = tk.Entry(frame_form, font=("Arial", 12))
-entry_nama.grid(row=0, column=1, pady=5)
+# Tombol untuk membuka input nama
+button_tambah = tk.Button(frame_form, text="Tambah Makanan", command=input_nama_window, width=15, bg="white")
+button_tambah.grid(row=0, column=0, pady=10)
 
-label_kategori = tk.Label(frame_form, text="Kategori", font=("Arial", 12), bg="#76608A", fg="white")
-label_kategori.grid(row=1, column=0, sticky="w", pady=5)
-entry_kategori = tk.Entry(frame_form, font=("Arial", 12))
-entry_kategori.grid(row=1, column=1, pady=5)
-
-label_warna = tk.Label(frame_form, text="Warna", font=("Arial", 12), bg="#76608A", fg="white")
-label_warna.grid(row=2, column=0, sticky="w", pady=5)
-entry_warna = tk.Entry(frame_form, font=("Arial", 12))
-entry_warna.grid(row=2, column=1, pady=5)
-
-# Tombol untuk aksi
-button_tambah = tk.Button(frame_form, text="Tambah", command=tambah_data, width=15, bg="white")
-button_tambah.grid(row=3, column=0, pady=10)
-
-button_edit = tk.Button(frame_form, text="Edit", command=edit_data, width=15, bg="white")
-button_edit.grid(row=3, column=1, pady=10)
-
+# Tombol untuk menghapus data
 button_hapus = tk.Button(frame_form, text="Hapus", command=hapus_data, width=15, bg="white")
-button_hapus.grid(row=4, column=0, pady=10)
-
-button_simpan = tk.Button(frame_form, text="Simpan", command=lambda: clear_entries(), width=15, bg="white")
-button_simpan.grid(row=4, column=1, pady=10)
+button_hapus.grid(row=0, column=1, pady=10)
 
 # Listbox untuk menampilkan data makanan
 label_list = tk.Label(frame_list, text="Data Makanan", font=("Arial", 14, "bold"), bg="#76608A", fg="white")

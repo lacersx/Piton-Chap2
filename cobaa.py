@@ -97,6 +97,12 @@ def clear_data():
     data_makanan = {}
     selected_id = None  # Reset ID yang dipilih setelah proses edit selesai
 
+def reset_data():
+        c.execute("delete from makanan")
+        conn.commit()
+        tampilkan_data() #refresh listbox setelah penghapusan
+        messagebox.showinfo("reset", "semua data telah dihapus")
+
 # Setup GUI
 root = tk.Tk()
 root.title("Data Makanan")
