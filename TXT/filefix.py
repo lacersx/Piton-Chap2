@@ -125,12 +125,27 @@ def tampilkan_transaksi():
 
 # Fungsi untuk menghapus data yang dipilih
 def hapus_data():
-    try:
-        selected = listbox.curselection()[0]
-        del makanan_data[selected]
-        tampilkan_data()
-    except IndexError:
-        messagebox.showwarning("Pilih Data", "Pilih data yang ingin dihapus!")
+    selected_makanan = listbox.curselection()
+    selected_transaksi = transaksi_listbox.curselection()
+
+    if selected_makanan:
+        try:
+            selected = listbox.curselection()[0]
+            del makanan_data[selected]
+            tampilkan_data()
+        except IndexError:
+            messagebox.showwarning("Pilih Data", "Pilih data yang ingin dihapus!")
+    
+    elif selected_transaksi:
+        try:
+            selected = selected_transaksi[0]
+            del transaksi_data[selected]
+            tampilkan_transaksi()
+        except IndexError:
+            messagebox.showwarning("Pilih Data", "Pilih data transaksi yang ingin dihapus!")
+    
+    else:
+        messagebox.showwarning("Pilih Data", "Tidak ada data yang dipilih untuk dihapus!")
 
 # Fungsi untuk mengedit data yang dipilih
 def edit_data():
