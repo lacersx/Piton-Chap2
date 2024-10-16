@@ -147,6 +147,7 @@ def hapus_data():
     else:
         messagebox.showwarning("Pilih Data", "Tidak ada data yang dipilih untuk dihapus!")
 
+
 # Fungsi untuk mengedit data yang dipilih
 def edit_data():
     try:
