@@ -1,5 +1,5 @@
 import os
-from InD import baca_file, parsing_dictionary
+from fungsi import baca_file, parsing_dictionary
 
 #def hapus_data(nama_file):
 #    if not os.path.exists(nama_file):

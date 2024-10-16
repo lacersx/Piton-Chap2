@@ -1,4 +1,4 @@
-from InD import Baca, Up, Del, Makanan
+from fungsi import Baca, Up, Del, Makanan
 
 def main():
     # Muat data dari file saat aplikasi dimulai
