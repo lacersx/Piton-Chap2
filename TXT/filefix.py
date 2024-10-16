@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
+from datetime import datetime
 
 # Data Kategori dan Warna
 kategori_data = {
@@ -24,12 +25,14 @@ makanan_data = [
     {'nama': 'Mie', 'kategori': 3, 'warna': 2},
 ]
 
+transaksi_data = []  # List untuk menyimpan data transaksi
+
 # Fungsi untuk membuka jendela detail makanan
 def buka_detail_makanan():
     window = tk.Toplevel(root)
     window.title("Data Makanan")
     window.geometry("300x200")
-    window.configure(bg="#4B306A")  # Warna latar belakang sama
+    window.configure(bg="#4B306A")
     
     label = tk.Label(window, text="Masukkan Nama Makanan", font=("Arial", 12), bg="#4B306A", fg="white")
     label.pack(pady=10)
@@ -54,7 +57,7 @@ def buka_kategori_window():
     window = tk.Toplevel(root)
     window.title("Kategori Makanan")
     window.geometry("300x200")
-    window.configure(bg="#4B306A")  # Warna latar belakang sama
+    window.configure(bg="#4B306A")
     
     label = tk.Label(window, text="Masukkan Kategori Makanan", font=("Arial", 12), bg="#4B306A", fg="white")
     label.pack(pady=10)
@@ -79,7 +82,7 @@ def buka_warna_window():
     window = tk.Toplevel(root)
     window.title("Warna Makanan")
     window.geometry("300x200")
-    window.configure(bg="#4B306A")  # Warna latar belakang sama
+    window.configure(bg="#4B306A")
     
     label = tk.Label(window, text="Masukkan Warna Makanan", font=("Arial", 12), bg="#4B306A", fg="white")
     label.pack(pady=10)
@@ -113,6 +116,12 @@ def tampilkan_data():
     listbox.delete(0, tk.END)
     for idx, makanan in enumerate(makanan_data, start=1):
         listbox.insert(tk.END, f"{idx}. {makanan['nama']} (Kategori: {kategori_data[makanan['kategori']]}, Warna: {warna_data[makanan['warna']]})")
+
+# Fungsi untuk menampilkan transaksi
+def tampilkan_transaksi():
+    transaksi_listbox.delete(0, tk.END)
+    for idx, transaksi in enumerate(transaksi_data, start=1):
+        transaksi_listbox.insert(tk.END, f"{idx}. {transaksi['tanggal']} - {transaksi['nama']} - Rp {transaksi['harga']}")
 
 # Fungsi untuk menghapus data yang dipilih
 def hapus_data():
@@ -172,13 +181,53 @@ def edit_data():
     except IndexError:
         messagebox.showwarning("Pilih Data", "Pilih data yang ingin diedit!")
 
+# Fungsi untuk menambahkan transaksi
+def tambah_transaksi():
+    window = tk.Toplevel(root)
+    window.title("Tambah Transaksi")
+    window.geometry("300x250")
+    window.configure(bg="#4B306A")
+
+    label_nama = tk.Label(window, text="Pilih Makanan", font=("Arial", 12), bg="#4B306A", fg="white")
+    label_nama.pack(pady=10)
+
+    makanan_var = tk.StringVar(window)
+    makanan_var.set(makanan_data[0]['nama'])  # Default pilihan pertama
+
+    makanan_option = tk.OptionMenu(window, makanan_var, *[m['nama'] for m in makanan_data])
+    makanan_option.pack(pady=10)
+
+    label_harga = tk.Label(window, text="Masukkan Harga", font=("Arial", 12), bg="#4B306A", fg="white")
+    label_harga.pack(pady=10)
+
+    entry_harga = tk.Entry(window, font=("Arial", 12))
+    entry_harga.pack(pady=10)
+
+    def simpan_transaksi():
+        makanan = makanan_var.get()
+        harga = entry_harga.get()
+
+        if harga:
+            transaksi_data.append({
+                'tanggal': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'nama': makanan,
+                'harga': harga
+            })
+            window.destroy()
+            tampilkan_transaksi()
+        else:
+            messagebox.showwarning("Input Error", "Harga Harus Diisi!")
+
+    simpan_button = tk.Button(window, text="Simpan Transaksi", command=simpan_transaksi, bg="white")
+    simpan_button.pack(pady=10)
+
 # Variabel global untuk menyimpan input sementara
 data_makanan = {'nama': '', 'kategori': '', 'warna': ''}
 
 # Membuat GUI utama
 root = tk.Tk()
-root.title("Data Makanan")
-root.geometry("400x500")
+root.title("Data Makanan & Transaksi")
+root.geometry("500x600")
 root.configure(bg="#4B306A")
 
 # Tombol untuk membuka input nama makanan
@@ -196,6 +245,14 @@ button_hapus.pack(pady=10)
 # Tombol untuk mengedit data
 button_edit = tk.Button(root, text="Edit Data", command=edit_data, width=20, bg="white")
 button_edit.pack(pady=10)
+
+# Tombol untuk menambah transaksi
+button_transaksi = tk.Button(root, text="Tambah Transaksi", command=tambah_transaksi, width=20, bg="white")
+button_transaksi.pack(pady=10)
+
+# Listbox untuk menampilkan transaksi
+transaksi_listbox = tk.Listbox(root, font=("Arial", 12), width=50, height=10)
+transaksi_listbox.pack(pady=10)
 
 # Tombol untuk menutup aplikasi
 button_tutup = tk.Button(root, text="Tutup Aplikasi", command=root.quit, width=20, bg="white")
