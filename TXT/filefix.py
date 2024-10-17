@@ -103,13 +103,28 @@ def buka_warna_window():
     simpan_button.pack(pady=10)
 
 # Fungsi untuk menyimpan data ke list (database)
+# Fungsi untuk menyimpan data ke list (database)
 def simpan_ke_database():
-    nama = data_makanan['nama']
-    kategori = data_makanan['kategori']
-    warna = data_makanan['warna']
+    try:
+        nama = data_makanan['nama']
+        kategori = int(data_makanan['kategori'])
+        warna = int(data_makanan['warna'])
+
+        # Tambahkan data baru ke list makanan_data
+        makanan_data.append({'nama': nama, 'kategori': kategori, 'warna': warna})
+        
+        # Perbarui tampilan di Listbox
+        tampilkan_data()
+
+        # Reset data_makanan untuk input baru
+        data_makanan.clear()
+        data_makanan.update({'nama': '', 'kategori': '', 'warna': ''})
+
+        messagebox.showinfo("Berhasil", "Data makanan berhasil disimpan!")
     
-    makanan_data.append({'nama': nama, 'kategori': int(kategori), 'warna': int(warna)})
-    tampilkan_data()
+    except ValueError:
+        messagebox.showerror("Input Error", "Kategori dan Warna harus berupa angka!")
+
 
 # Fungsi untuk menampilkan data
 def tampilkan_data():
@@ -122,6 +137,56 @@ def tampilkan_transaksi():
     transaksi_listbox.delete(0, tk.END)
     for idx, transaksi in enumerate(transaksi_data, start=1):
         transaksi_listbox.insert(tk.END, f"{idx}. {transaksi['tanggal']} - {transaksi['nama']} - Rp {transaksi['harga']}")
+
+# Fungsi untuk membuka jendela input kategori
+def buka_kategori_window():
+    window = tk.Toplevel(root)
+    window.title("Kategori Makanan")
+    window.geometry("300x200")
+    window.configure(bg="#4B306A")
+    
+    label = tk.Label(window, text="Masukkan Kategori (1-5)", font=("Arial", 12), bg="#4B306A", fg="white")
+    label.pack(pady=10)
+    
+    entry_kategori = tk.Entry(window, font=("Arial", 12))
+    entry_kategori.pack(pady=10)
+
+    def lanjut_warna():
+        kategori = entry_kategori.get()
+        if kategori.isdigit() and 1 <= int(kategori) <= 5:
+            data_makanan['kategori'] = kategori
+            window.destroy()
+            buka_warna_window()
+        else:
+            messagebox.showwarning("Input Error", "Kategori harus berupa angka antara 1 hingga 5!")
+
+    lanjut_button = tk.Button(window, text="Lanjut", command=lanjut_warna, bg="white")
+    lanjut_button.pack(pady=10)
+
+# Fungsi untuk membuka jendela input warna
+def buka_warna_window():
+    window = tk.Toplevel(root)
+    window.title("Warna Makanan")
+    window.geometry("300x200")
+    window.configure(bg="#4B306A")
+    
+    label = tk.Label(window, text="Masukkan Warna (1-4)", font=("Arial", 12), bg="#4B306A", fg="white")
+    label.pack(pady=10)
+    
+    entry_warna = tk.Entry(window, font=("Arial", 12))
+    entry_warna.pack(pady=10)
+
+    def simpan_data():
+        warna = entry_warna.get()
+        if warna.isdigit() and 1 <= int(warna) <= 4:
+            data_makanan['warna'] = warna
+            window.destroy()
+            simpan_ke_database()
+        else:
+            messagebox.showwarning("Input Error", "Warna harus berupa angka antara 1 hingga 4!")
+
+    simpan_button = tk.Button(window, text="Selesai", command=simpan_data, bg="white")
+    simpan_button.pack(pady=10)
 
 # Fungsi untuk menghapus data yang dipilih
 def hapus_data():
