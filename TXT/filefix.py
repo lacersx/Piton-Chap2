@@ -32,9 +32,9 @@ def buka_detail_makanan():
     window = tk.Toplevel(root)
     window.title("Data Makanan")
     window.geometry("300x200")
-    window.configure(bg="#4B306A")
+    window.configure(bg="#76608A")
     
-    label = tk.Label(window, text="Masukkan Nama Makanan", font=("Arial", 12), bg="#4B306A", fg="white")
+    label = tk.Label(window, text="Masukkan Nama Makanan", font=("Arial", 12), bg="#76608A", fg="white")
     label.pack(pady=10)
     
     entry_nama = tk.Entry(window, font=("Arial", 12))
@@ -57,9 +57,9 @@ def buka_kategori_window():
     window = tk.Toplevel(root)
     window.title("Kategori Makanan")
     window.geometry("300x200")
-    window.configure(bg="#4B306A")
+    window.configure(bg="#76608A")
     
-    label = tk.Label(window, text="Masukkan Kategori Makanan", font=("Arial", 12), bg="#4B306A", fg="white")
+    label = tk.Label(window, text="Masukkan Kategori Makanan", font=("Arial", 12), bg="#76608A", fg="white")
     label.pack(pady=10)
     
     entry_kategori = tk.Entry(window, font=("Arial", 12))
@@ -82,9 +82,9 @@ def buka_warna_window():
     window = tk.Toplevel(root)
     window.title("Warna Makanan")
     window.geometry("300x200")
-    window.configure(bg="#4B306A")
+    window.configure(bg="#76608A")
     
-    label = tk.Label(window, text="Masukkan Warna Makanan", font=("Arial", 12), bg="#4B306A", fg="white")
+    label = tk.Label(window, text="Masukkan Warna Makanan", font=("Arial", 12), bg="#76608A", fg="white")
     label.pack(pady=10)
     
     entry_warna = tk.Entry(window, font=("Arial", 12))
@@ -143,9 +143,9 @@ def buka_kategori_window():
     window = tk.Toplevel(root)
     window.title("Kategori Makanan")
     window.geometry("300x200")
-    window.configure(bg="#4B306A")
+    window.configure(bg="#76608A")
     
-    label = tk.Label(window, text="Masukkan Kategori (1-5)", font=("Arial", 12), bg="#4B306A", fg="white")
+    label = tk.Label(window, text="Masukkan Kategori (1-5)", font=("Arial", 12), bg="#76608A", fg="white")
     label.pack(pady=10)
     
     entry_kategori = tk.Entry(window, font=("Arial", 12))
@@ -168,9 +168,9 @@ def buka_warna_window():
     window = tk.Toplevel(root)
     window.title("Warna Makanan")
     window.geometry("300x200")
-    window.configure(bg="#4B306A")
+    window.configure(bg="#76608A")
     
-    label = tk.Label(window, text="Masukkan Warna (1-4)", font=("Arial", 12), bg="#4B306A", fg="white")
+    label = tk.Label(window, text="Masukkan Warna (1-4)", font=("Arial", 12), bg="#76608A", fg="white")
     label.pack(pady=10)
     
     entry_warna = tk.Entry(window, font=("Arial", 12))
@@ -236,21 +236,21 @@ def edit_data():
         window = tk.Toplevel(root)
         window.title("Edit Makanan")
         window.geometry("300x200")
-        window.configure(bg="#4B306A")
+        window.configure(bg="#76608A")
         
-        label_nama = tk.Label(window, text="Edit Nama", font=("Arial", 12), bg="#4B306A", fg="white")
+        label_nama = tk.Label(window, text="Edit Nama", font=("Arial", 12), bg="#76608A", fg="white")
         label_nama.pack(pady=10)
         entry_nama = tk.Entry(window, font=("Arial", 12))
         entry_nama.insert(0, makanan_terpilih['nama'])
         entry_nama.pack(pady=10)
 
-        label_kategori = tk.Label(window, text="Edit Kategori", font=("Arial", 12), bg="#4B306A", fg="white")
+        label_kategori = tk.Label(window, text="Edit Kategori", font=("Arial", 12), bg="#76608A", fg="white")
         label_kategori.pack(pady=10)
         entry_kategori = tk.Entry(window, font=("Arial", 12))
         entry_kategori.insert(0, makanan_terpilih['kategori'])
         entry_kategori.pack(pady=10)
 
-        label_warna = tk.Label(window, text="Edit Warna", font=("Arial", 12), bg="#4B306A", fg="white")
+        label_warna = tk.Label(window, text="Edit Warna", font=("Arial", 12), bg="#76608A", fg="white")
         label_warna.pack(pady=10)
         entry_warna = tk.Entry(window, font=("Arial", 12))
         entry_warna.insert(0, makanan_terpilih['warna'])
@@ -267,9 +267,9 @@ def tambah_transaksi():
     window = tk.Toplevel(root)
     window.title("Tambah Transaksi")
     window.geometry("300x250")
-    window.configure(bg="#4B306A")
+    window.configure(bg="#76608A")
 
-    label_nama = tk.Label(window, text="Pilih Makanan", font=("Arial", 12), bg="#4B306A", fg="white")
+    label_nama = tk.Label(window, text="Pilih Makanan", font=("Arial", 12), bg="#76608A", fg="white")
     label_nama.pack(pady=10)
 
     makanan_var = tk.StringVar(window)
@@ -278,7 +278,7 @@ def tambah_transaksi():
     makanan_option = tk.OptionMenu(window, makanan_var, *[m['nama'] for m in makanan_data])
     makanan_option.pack(pady=10)
 
-    label_harga = tk.Label(window, text="Masukkan Harga", font=("Arial", 12), bg="#4B306A", fg="white")
+    label_harga = tk.Label(window, text="Masukkan Harga", font=("Arial", 12), bg="#76608A", fg="white")
     label_harga.pack(pady=10)
 
     entry_harga = tk.Entry(window, font=("Arial", 12))
@@ -309,7 +309,7 @@ data_makanan = {'nama': '', 'kategori': '', 'warna': ''}
 root = tk.Tk()
 root.title("Data Makanan & Transaksi")
 root.geometry("500x600")
-root.configure(bg="#4B306A")
+root.configure(bg="#76608A")
 
 # Tombol untuk membuka input nama makanan
 button_tambah = tk.Button(root, text="Tambah Makanan", command=buka_detail_makanan, width=20, bg="white")
