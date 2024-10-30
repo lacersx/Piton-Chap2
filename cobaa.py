@@ -1,166 +1,108 @@
 import tkinter as tk
 from tkinter import messagebox
-import sqlite3
 
-# Koneksi ke database SQLite
-conn = sqlite3.connect('makanan.db')
-c = conn.cursor()
+# Data makanan dan transaksi yang akan diisi saat aplikasi berjalan
+makanan_data = []
+transaksi_data = []
+kategori_data = {}
+warna_data = {}
 
-# Membuat tabel makanan jika belum ada
-c.execute('''
-CREATE TABLE IF NOT EXISTS makanan (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nama_makanan TEXT,
-    kategori TEXT,
-    warna TEXT
-)
-''')
-conn.commit()
-
-data_makanan = {}
-selected_id = None  # Untuk menyimpan id data yang sedang diedit
-
-# Fungsi untuk menyimpan atau mengubah data
-def simpan_data():
-    if all(data_makanan.values()):
-        if selected_id:  # Jika sedang dalam mode edit
-            c.execute("UPDATE makanan SET nama_makanan=?, kategori=?, warna=? WHERE id=?",
-                      (data_makanan['nama'], data_makanan['kategori'], data_makanan['warna'], selected_id))
-            messagebox.showinfo("Sukses", "Data berhasil diperbarui!")
-        else:
-            c.execute("INSERT INTO makanan (nama_makanan, kategori, warna) VALUES (?, ?, ?)",
-                      (data_makanan['nama'], data_makanan['kategori'], data_makanan['warna']))
-            messagebox.showinfo("Sukses", "Data berhasil ditambahkan!")
-        conn.commit()
-        clear_data()
-        tampilkan_data()
-        switch_page(halaman_awal)
-    else:
-        messagebox.showwarning("Input Error", "Lengkapi semua data")
-
-# Fungsi untuk menampilkan data di Listbox
-def tampilkan_data():
-    listbox.delete(0, tk.END)
-    for row in c.execute("SELECT * FROM makanan"):
-        listbox.insert(tk.END, f"{row[0]} - {row[1]} ({row[2]}, {row[3]})")
-
-# Fungsi untuk menghapus data
-def hapus_data():
+# Fungsi untuk membaca data kategori dan warna dari file txt
+def load_data(filename):
+    data = {}
     try:
-        selected = listbox.curselection()[0]
-        item_id = listbox.get(selected).split(' - ')[0]  # Ambil ID dari data yang dipilih
-        c.execute("DELETE FROM makanan WHERE id=?", (item_id,))
-        conn.commit()
-        tampilkan_data()
-        messagebox.showinfo("Sukses", "Data berhasil dihapus!")
-    except IndexError:
-        messagebox.showwarning("Selection Error", "Pilih data yang ingin dihapus")
+        with open(filename, "r") as file:
+            for line in file:
+                key, value = line.strip().split(',')
+                data[int(key)] = value
+    except FileNotFoundError:
+        messagebox.showerror("Error", f"File {filename} tidak ditemukan.")
+    return data
 
-# Fungsi untuk mengedit data
-def edit_data():
-    global selected_id
-    try:
-        selected = listbox.curselection()[0]
-        selected_id = listbox.get(selected).split(' - ')[0]  # Ambil ID dari data yang dipilih
+# Fungsi untuk menyimpan data makanan dan transaksi ke file txt
+def save_data(filename, data_list):
+    with open(filename, "w") as file:
+        for data in data_list:
+            file.write(",".join(map(str, data.values())) + "\n")
 
-        # Mendapatkan data dari database berdasarkan ID
-        c.execute("SELECT * FROM makanan WHERE id=?", (selected_id,))
-        row = c.fetchone()
+# Fungsi untuk menampilkan data makanan
+def tampilkan_data_makanan():
+    listbox_makanan.delete(0, tk.END)
+    for idx, makanan in enumerate(makanan_data, start=1):
+        nama = makanan['nama']
+        kategori = kategori_data.get(makanan['kategori'], "Unknown")
+        warna = warna_data.get(makanan['warna'], "Unknown")
+        listbox_makanan.insert(tk.END, f"{idx}. {nama} (Kategori: {kategori}, Warna: {warna})")
 
-        # Mengisi input field dengan data yang dipilih
-        entry_nama.delete(0, tk.END)
-        entry_nama.insert(0, row[1])
-        entry_kategori.delete(0, tk.END)
-        entry_kategori.insert(0, row[2])
-        entry_warna.delete(0, tk.END)
-        entry_warna.insert(0, row[3])
-
-        # Beralih ke halaman input untuk mengedit data
-        switch_page(halaman_nama)
-    except IndexError:
-        messagebox.showwarning("Selection Error", "Pilih data yang ingin diedit")
-
-# Navigasi halaman
-def switch_page(page):
-    page.tkraise()
-
-# Simpan input sementara
-def simpan_input(key, entry, next_page):
-    data_makanan[key] = entry.get()
-    if data_makanan[key]:
-        switch_page(next_page)
+# Fungsi untuk menambah data makanan
+def tambah_data_makanan():
+    nama = entry_nama.get()
+    kategori = int(dropdown_kategori.get())
+    warna = int(dropdown_warna.get())
+    
+    if nama:
+        makanan_data.append({'nama': nama, 'kategori': kategori, 'warna': warna})
+        tampilkan_data_makanan()
+        save_data("makanan_data.txt", makanan_data)
     else:
-        messagebox.showwarning("Input Error", f"{key.capitalize()} tidak boleh kosong")
+        messagebox.showwarning("Input Error", "Nama makanan harus diisi!")
 
-def clear_data():
-    global data_makanan, selected_id
-    data_makanan = {}
-    selected_id = None  # Reset ID yang dipilih setelah proses edit selesai
+# Fungsi untuk menghapus data makanan
+def hapus_data_makanan():
+    selected = listbox_makanan.curselection()
+    if selected:
+        makanan_data.pop(selected[0])
+        tampilkan_data_makanan()
+        save_data("makanan_data.txt", makanan_data)
+    else:
+        messagebox.showwarning("Pilih Data", "Pilih data yang ingin dihapus.")
 
-def reset_data():
-        c.execute("delete from makanan")
-        conn.commit()
-        tampilkan_data() #refresh listbox setelah penghapusan
-        messagebox.showinfo("reset", "semua data telah dihapus")
+# Fungsi untuk menambah transaksi
+def tambah_transaksi():
+    # Implementasi untuk menambah transaksi berdasarkan pilihan makanan dan harga
+    pass
 
-# Setup GUI
+# Memuat data kategori dan warna dari file txt
+kategori_data = load_data("kategori_data.txt")
+warna_data = load_data("warna_data.txt")
+
+# Membuat GUI
 root = tk.Tk()
-root.title("Data Makanan")
+root.title("Aplikasi Data Makanan & Transaksi")
+root.geometry("600x400")
 
-# Warna ungu yang digunakan
-ungu = "#76608A"
+# Tampilan Utama - Listbox untuk menampilkan data makanan
+listbox_makanan = tk.Listbox(root, width=50, height=10)
+listbox_makanan.pack(pady=10)
 
-# Membuat frame untuk setiap halaman dan menerapkan warna ungu
-halaman_awal = tk.Frame(root, bg=ungu)
-halaman_awal.grid(row=0, column=0, sticky='news')
+# Field input untuk nama makanan
+tk.Label(root, text="Nama Makanan:").pack()
+entry_nama = tk.Entry(root)
+entry_nama.pack()
 
-halaman_nama = tk.Frame(root, bg=ungu)
-halaman_nama.grid(row=0, column=0, sticky='news')
+# Dropdown untuk kategori
+tk.Label(root, text="Kategori:").pack()
+dropdown_kategori = tk.StringVar(root)
+dropdown_kategori.set("Pilih Kategori")
+kategori_menu = tk.OptionMenu(root, dropdown_kategori, *kategori_data.keys())
+kategori_menu.pack()
 
-halaman_kategori = tk.Frame(root, bg=ungu)
-halaman_kategori.grid(row=0, column=0, sticky='news')
+# Dropdown untuk warna
+tk.Label(root, text="Warna:").pack()
+dropdown_warna = tk.StringVar(root)
+dropdown_warna.set("Pilih Warna")
+warna_menu = tk.OptionMenu(root, dropdown_warna, *warna_data.keys())
+warna_menu.pack()
 
-halaman_warna = tk.Frame(root, bg=ungu)
-halaman_warna.grid(row=0, column=0, sticky='news')
+# Tombol untuk menambah makanan
+button_tambah = tk.Button(root, text="Tambah Makanan", command=tambah_data_makanan)
+button_tambah.pack(pady=5)
 
-halaman_tampilkan_data = tk.Frame(root, bg=ungu)
-halaman_tampilkan_data.grid(row=0, column=0, sticky='news')
+# Tombol untuk menghapus makanan
+button_hapus = tk.Button(root, text="Hapus Makanan", command=hapus_data_makanan)
+button_hapus.pack(pady=5)
 
-# --- Halaman Awal ---
-tk.Label(halaman_awal, text="Masukkan Detail Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-tk.Button(halaman_awal, text="Masukkan Nama Makanan", command=lambda: switch_page(halaman_nama), bg="white").pack(pady=10)
-
-# --- Halaman Nama ---
-tk.Label(halaman_nama, text="Masukkan Nama Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-entry_nama = tk.Entry(halaman_nama)
-entry_nama.pack(pady=10)
-tk.Button(halaman_nama, text="Lanjut", command=lambda: simpan_input('nama', entry_nama, halaman_kategori), bg="white").pack(pady=10)
-
-# --- Halaman Kategori ---
-tk.Label(halaman_kategori, text="Masukkan Kategori Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-entry_kategori = tk.Entry(halaman_kategori)
-entry_kategori.pack(pady=10)
-tk.Button(halaman_kategori, text="Lanjut", command=lambda: simpan_input('kategori', entry_kategori, halaman_warna), bg="white").pack(pady=10)
-
-# --- Halaman Warna ---
-tk.Label(halaman_warna, text="Masukkan Warna Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-entry_warna = tk.Entry(halaman_warna)
-entry_warna.pack(pady=10)
-tk.Button(halaman_warna, text="Lanjut", command=lambda: simpan_input('warna', entry_warna, halaman_tampilkan_data), bg="white").pack(pady=10)
-
-# --- Halaman Tampilkan Data ---
-tk.Label(halaman_tampilkan_data, text="Data Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-tk.Button(halaman_tampilkan_data, text="Simpan Data", command=simpan_data, bg="white").pack(pady=10)
-listbox = tk.Listbox(halaman_tampilkan_data, width=50)
-listbox.pack(pady=10)
-tk.Button(halaman_tampilkan_data, text="Hapus Data", command=hapus_data, bg="white").pack(pady=10)
-tk.Button(halaman_tampilkan_data, text="Edit Data", command=edit_data, bg="white").pack(pady=10)
-
-# Menampilkan halaman awal saat aplikasi pertama kali dijalankan
-switch_page(halaman_awal)
-tampilkan_data()
+# Menampilkan data makanan saat aplikasi dimulai
+tampilkan_data_makanan()
 
 root.mainloop()
-
-# Tutup koneksi ke database saat aplikasi ditutup
-conn.close()
