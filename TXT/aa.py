@@ -1,11 +1,24 @@
 import tkinter as tk
 from tkinter import messagebox
+from datetime import datetime
 
 # Initialize main application window
 root = tk.Tk()
 root.title("Data Makanan & Transaksi")
 root.geometry("500x500")
 root.configure(bg="#A48ACF")
+
+makanan_data = []
+
+class Baca:
+    def baca_file(lokasi_file):
+        try:
+            with open(lokasi_file, 'r') as file:
+                data = file.read().strip()
+            return data
+        except FileNotFoundError:
+            print(f"File {lokasi_file} tidak ditemukan.")
+            return None
 
 def simpan_ke_database():
     try:
@@ -42,7 +55,32 @@ def tampilkan_transaksi():
 
 # Function placeholders for button actions
 def tambah_data():
-    pass
+    def simpan_input():
+        data_makanan['nama'] = entry_nama.get()
+        data_makanan['kategori'] = entry_kategori.get()
+        data_makanan['warna'] = entry_warna.get()
+        simpan_ke_database()
+        window.destroy()
+    
+    window = tk.Toplevel(root)
+    window.title("Tambah Data")
+    window.geometry("300x250")
+    window.configure(bg="#76608A")
+    
+    tk.Label(window, text="Nama", bg="#76608A", fg="white").pack(pady=5)
+    entry_nama = tk.Entry(window)
+    entry_nama.pack(pady=5)
+    
+    tk.Label(window, text="Kategori (1: Buah, 2: Sayuran, 3: Daging)", bg="#76608A", fg="white").pack(pady=5)
+    entry_kategori = tk.Entry(window)
+    entry_kategori.pack(pady=5)
+    
+    tk.Label(window, text="Warna (1: Merah, 2: Hijau, 3: Kuning)", bg="#76608A", fg="white").pack(pady=5)
+    entry_warna = tk.Entry(window)
+    entry_warna.pack(pady=5)
+    
+    tk.Button(window, text="Simpan", command=simpan_input).pack(pady=10)
+
 
 def hapus_data_makanan():
     selected_makanan = listbox.curselection()
