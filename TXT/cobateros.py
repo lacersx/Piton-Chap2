@@ -194,4 +194,35 @@ def tambah_transaksi():
     makanan_var = tk.StringVar(value=makanan_data[0]['nama'] if makanan_data else "")
     tk.OptionMenu(window, makanan_var, *[m['nama'] for m in makanan_data]).pack(pady=5)
     
-    tk.Label(window, text="Harga", bg="#76608A", fg="white").
+    tk.Label(window, text="Harga", bg="#76608A", fg="white").pack(pady=5)
+    entry_harga = tk.Entry(window)
+    entry_harga.pack(pady=5)
+    
+    tk.Button(window, text="Simpan Transaksi", command=simpan_transaksi).pack(pady=10)
+
+# Membuat tombol untuk menambah, mengedit, dan menghapus data
+tambah_button = tk.Button(root, text="Tambah Data Makanan", command=tambah_data)
+tambah_button.pack(pady=10)
+
+edit_button = tk.Button(root, text="Edit Data Makanan", command=edit_data)
+edit_button.pack(pady=10)
+
+hapus_button = tk.Button(root, text="Hapus Data Makanan", command=hapus_data_makanan)
+hapus_button.pack(pady=10)
+
+transaksi_button = tk.Button(root, text="Tambah Transaksi", command=tambah_transaksi)
+transaksi_button.pack(pady=10)
+
+# Menampilkan riwayat makanan
+riwayat_makanan_text = tk.Text(root, width=60, height=10, state=tk.DISABLED)
+riwayat_makanan_text.pack(pady=20)
+
+# Menampilkan riwayat transaksi
+riwayat_transaksi_text = tk.Text(root, width=60, height=10, state=tk.DISABLED)
+riwayat_transaksi_text.pack(pady=20)
+
+# Menampilkan riwayat makanan dan transaksi saat aplikasi dijalankan
+tampilkan_riwayat_makanan()
+tampilkan_riwayat_transaksi()
+
+root.mainloop()
