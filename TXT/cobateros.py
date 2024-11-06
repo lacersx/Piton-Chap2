@@ -225,4 +225,4 @@ riwayat_transaksi_text.pack(pady=20)
 tampilkan_riwayat_makanan()
 tampilkan_riwayat_transaksi()
 
-root.mainloop()
+root.mainloop()  

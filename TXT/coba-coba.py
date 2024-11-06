@@ -1,105 +1,212 @@
 import tkinter as tk
 from tkinter import messagebox
-import sqlite3
+from datetime import datetime
 
-# Koneksi ke database
-conn = sqlite3.connect('makanan.db')
-c = conn.cursor()
-c.execute('''CREATE TABLE IF NOT EXISTS makanan (id INTEGER PRIMARY KEY, nama TEXT, kategori TEXT, warna TEXT)''')
-conn.commit()
+# Initialize main application window
+root = tk.Tk()
+root.title("Data Makanan & Transaksi")
+root.geometry("500x500")
+root.configure(bg="#A48ACF")
 
-data_makanan, selected_id = {}, None
+# Global Variables
+makanan_data = []
+transaksi_data = []
+data_makanan = {'nama': '', 'kategori': '', 'warna': ''}
+kategori_data = {1: "Kategori 1", 2: "Kategori 2", 3: "Kategori 3"}
+warna_data = {1: "Merah", 2: "Hijau", 3: "Biru"}
 
-# Fungsi utama: tambah, edit, hapus, dan tampilkan data
-def simpan_data():
-    if all(data_makanan.values()):
-        if selected_id:
-            c.execute("UPDATE makanan SET nama=?, kategori=?, warna=? WHERE id=?", 
-                      (data_makanan['nama'], data_makanan['kategori'], data_makanan['warna'], selected_id))
-        else:
-            c.execute("INSERT INTO makanan (nama, kategori, warna) VALUES (?, ?, ?)", 
-                      (data_makanan['nama'], data_makanan['kategori'], data_makanan['warna']))
-        conn.commit()
-        clear_data(), tampilkan_data()
+# Fungsi untuk menyimpan data makanan ke list
+def simpan_ke_database():
+    try:
+        nama = data_makanan['nama']
+        kategori = int(data_makanan['kategori'])
+        warna = int(data_makanan['warna'])
+
+        # Tambahkan data baru ke list makanan_data
+        makanan_data.append({'nama': nama, 'kategori': kategori, 'warna': warna})
+        
+        # Perbarui tampilan di Listbox
+        tampilkan_data()
+
+        # Reset data_makanan untuk input baru
+        data_makanan.clear()
+        data_makanan.update({'nama': '', 'kategori': '', 'warna': ''})
+
+        messagebox.showinfo("Berhasil", "Data makanan berhasil disimpan!")
+    
+    except ValueError:
+        messagebox.showerror("Input Error", "Kategori dan Warna harus berupa angka!")
+
+# Fungsi untuk menampilkan data makanan di Listbox
+def tampilkan_data():
+    listbox.delete(0, tk.END)
+    for idx, makanan in enumerate(makanan_data, start=1):
+        listbox.insert(tk.END, f"{idx}. {makanan['nama']} (Kategori: {kategori_data[makanan['kategori']]}, Warna: {warna_data[makanan['warna']]})")
+
+# Fungsi untuk menampilkan data transaksi di Listbox
+def tampilkan_transaksi():
+    transaksi_listbox.delete(0, tk.END)
+    for idx, transaksi in enumerate(transaksi_data, start=1):
+        transaksi_listbox.insert(tk.END, f"{idx}. {transaksi['tanggal']} - {transaksi['nama']} - Rp {transaksi['harga']}")
+
+# Fungsi untuk menambahkan data makanan baru
+def tambah_data():
+    window = tk.Toplevel(root)
+    window.title("Tambah Data Makanan")
+    window.geometry("300x250")
+    window.configure(bg="#76608A")
+
+    def simpan_data_baru():
+        data_makanan['nama'] = entry_nama.get()
+        data_makanan['kategori'] = entry_kategori.get()
+        data_makanan['warna'] = entry_warna.get()
+        simpan_ke_database()
+        window.destroy()
+
+    tk.Label(window, text="Nama Makanan", bg="#76608A", fg="white").pack(pady=5)
+    entry_nama = tk.Entry(window)
+    entry_nama.pack(pady=5)
+
+    tk.Label(window, text="Kategori (angka)", bg="#76608A", fg="white").pack(pady=5)
+    entry_kategori = tk.Entry(window)
+    entry_kategori.pack(pady=5)
+
+    tk.Label(window, text="Warna (angka)", bg="#76608A", fg="white").pack(pady=5)
+    entry_warna = tk.Entry(window)
+    entry_warna.pack(pady=5)
+
+    tk.Button(window, text="Simpan Data", command=simpan_data_baru, bg="white").pack(pady=10)
+
+# Fungsi untuk menghapus data makanan atau transaksi
+def hapus_data_makanan():
+    selected_makanan = listbox.curselection()
+    selected_transaksi = transaksi_listbox.curselection()
+
+    if selected_makanan:
+        try:
+            selected = selected_makanan[0]
+            del makanan_data[selected]
+            tampilkan_data()
+        except IndexError:
+            messagebox.showwarning("Pilih Data", "Pilih data yang ingin dihapus!")
+    
+    elif selected_transaksi:
+        try:
+            selected = selected_transaksi[0]
+            del transaksi_data[selected]
+            tampilkan_transaksi()
+        except IndexError:
+            messagebox.showwarning("Pilih Data", "Pilih data transaksi yang ingin dihapus!")
+    
     else:
-        messagebox.showwarning("Input Error", "Lengkapi semua data!")
+        messagebox.showwarning("Pilih Data", "Tidak ada data yang dipilih untuk dihapus!")
 
-def hapus_data():
+# Fungsi untuk mengedit data makanan
+def edit_data_makanan():
     try:
         selected = listbox.curselection()[0]
-        c.execute("DELETE FROM makanan WHERE id=?", (listbox.get(selected).split()[0],))
-        conn.commit(), tampilkan_data()
-    except IndexError:
-        messagebox.showwarning("Pilih Data", "Pilih data yang ingin dihapus!")
+        makanan_terpilih = makanan_data[selected]
 
-def edit_data():
-    global selected_id
-    try:
-        selected = listbox.curselection()[0]
-        selected_id = listbox.get(selected).split()[0]
-        c.execute("SELECT * FROM makanan WHERE id=?", (selected_id,))
-        row = c.fetchone()
-        entry_nama.delete(0, tk.END), entry_kategori.delete(0, tk.END), entry_warna.delete(0, tk.END)
-        entry_nama.insert(0, row[1]), entry_kategori.insert(0, row[2]), entry_warna.insert(0, row[3])
-        switch_page(halaman_nama)
+        def lanjut_edit():
+            nama_makanan = entry_nama.get()
+            kategori = entry_kategori.get()
+            warna = entry_warna.get()
+
+            if nama_makanan and kategori and warna:
+                makanan_terpilih['nama'] = nama_makanan
+                makanan_terpilih['kategori'] = int(kategori)
+                makanan_terpilih['warna'] = int(warna)
+                window.destroy()
+                tampilkan_data()
+            else:
+                messagebox.showwarning("Input Error", "Semua field harus diisi!")
+
+        window = tk.Toplevel(root)
+        window.title("Edit Makanan")
+        window.geometry("300x200")
+        window.configure(bg="#76608A")
+        
+        tk.Label(window, text="Edit Nama", bg="#76608A", fg="white").pack(pady=5)
+        entry_nama = tk.Entry(window)
+        entry_nama.insert(0, makanan_terpilih['nama'])
+        entry_nama.pack(pady=5)
+
+        tk.Label(window, text="Edit Kategori", bg="#76608A", fg="white").pack(pady=5)
+        entry_kategori = tk.Entry(window)
+        entry_kategori.insert(0, makanan_terpilih['kategori'])
+        entry_kategori.pack(pady=5)
+
+        tk.Label(window, text="Edit Warna", bg="#76608A", fg="white").pack(pady=5)
+        entry_warna = tk.Entry(window)
+        entry_warna.insert(0, makanan_terpilih['warna'])
+        entry_warna.pack(pady=5)
+
+        tk.Button(window, text="Simpan", command=lanjut_edit, bg="white").pack(pady=10)
+
     except IndexError:
         messagebox.showwarning("Pilih Data", "Pilih data yang ingin diedit!")
 
-def tampilkan_data():
-    listbox.delete(0, tk.END)
-    for row in c.execute("SELECT * FROM makanan"):
-        listbox.insert(tk.END, f"{row[0]} - {row[1]} ({row[2]}, {row[3]})")
+# Fungsi untuk menambahkan transaksi
+def tambah_transaksi():
+    if not makanan_data:
+        messagebox.showwarning("Data Kosong", "Tidak ada makanan yang tersedia untuk transaksi.")
+        return
+    
+    window = tk.Toplevel(root)
+    window.title("Tambah Transaksi")
+    window.geometry("300x250")
+    window.configure(bg="#76608A")
 
-def simpan_input(key, entry, next_page):
-    data_makanan[key] = entry.get()
-    switch_page(next_page) if data_makanan[key] else messagebox.showwarning("Input Error", f"{key.capitalize()} tidak boleh kosong!")
+    tk.Label(window, text="Pilih Makanan", bg="#76608A", fg="white").pack(pady=5)
+    makanan_var = tk.StringVar(window)
+    makanan_var.set(makanan_data[0]['nama'])  # Default pilihan pertama
+    tk.OptionMenu(window, makanan_var, *[m['nama'] for m in makanan_data]).pack(pady=5)
 
-def clear_data():
-    global data_makanan, selected_id
-    data_makanan, selected_id = {}, None
+    tk.Label(window, text="Masukkan Harga", bg="#76608A", fg="white").pack(pady=5)
+    entry_harga = tk.Entry(window)
+    entry_harga.pack(pady=5)
 
-# Setup GUI
-root = tk.Tk(); root.title("Data Makanan")
-ungu = "#76608A"
+    def simpan_transaksi():
+        makanan = makanan_var.get()
+        harga = entry_harga.get()
+        if harga:
+            transaksi_data.append({
+                'tanggal': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'nama': makanan,
+                'harga': harga
+            })
+            window.destroy()
+            tampilkan_transaksi()
+        else:
+            messagebox.showwarning("Input Error", "Harga Harus Diisi!")
 
-# Halaman
-halaman_awal = tk.Frame(root, bg=ungu); halaman_awal.grid(row=0, column=0, sticky='news')
-halaman_nama = tk.Frame(root, bg=ungu); halaman_nama.grid(row=0, column=0, sticky='news')
-halaman_kategori = tk.Frame(root, bg=ungu); halaman_kategori.grid(row=0, column=0, sticky='news')
-halaman_warna = tk.Frame(root, bg=ungu); halaman_warna.grid(row=0, column=0, sticky='news')
-halaman_tampilkan_data = tk.Frame(root, bg=ungu); halaman_tampilkan_data.grid(row=0, column=0, sticky='news')
+    tk.Button(window, text="Simpan Transaksi", command=simpan_transaksi, bg="white").pack(pady=10)
 
-# Elemen UI
-tk.Label(halaman_awal, text="Masukkan Detail Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-tk.Button(halaman_awal, text="Masukkan Nama Makanan", command=lambda: switch_page(halaman_nama), bg="white").pack(pady=10)
+# Fungsi untuk keluar dari aplikasi
+def keluar_aplikasi():
+    root.quit()
 
-tk.Label(halaman_nama, text="Masukkan Nama Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-entry_nama = tk.Entry(halaman_nama); entry_nama.pack(pady=10)
-tk.Button(halaman_nama, text="Lanjut", command=lambda: simpan_input('nama', entry_nama, halaman_kategori), bg="white").pack(pady=10)
+# Main Frame setup
+frame_main = tk.Frame(root, bg="#A48ACF")
+frame_main.pack(expand=True, fill="both")
 
-tk.Label(halaman_kategori, text="Masukkan Kategori Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-entry_kategori = tk.Entry(halaman_kategori); entry_kategori.pack(pady=10)
-tk.Button(halaman_kategori, text="Lanjut", command=lambda: simpan_input('kategori', entry_kategori, halaman_warna), bg="white").pack(pady=10)
+# Button setup
+button_tambah = tk.Button(frame_main, text="Tambah Data", command=tambah_data, width=20)
+button_tambah.grid(row=0, column=1, pady=(20, 10))
 
-tk.Label(halaman_warna, text="Masukkan Warna Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-entry_warna = tk.Entry(halaman_warna); entry_warna.pack(pady=10)
-tk.Button(halaman_warna, text="Lanjut", command=lambda: simpan_input('warna', entry_warna, halaman_tampilkan_data), bg="white").pack(pady=10)
+button_hapus_makanan = tk.Button(frame_main, text="Hapus Data Makanan", command=hapus_data_makanan, width=18)
+button_edit_makanan = tk.Button(frame_main, text="Edit Data Makanan", command=edit_data_makanan, width=18)
+button_tambah_transaksi = tk.Button(frame_main, text="Tambah Transaksi", command=tambah_transaksi, width=18)
+button_keluar = tk.Button(frame_main, text="Keluar Aplikasi", command=keluar_aplikasi, width=18)
 
-tk.Label(halaman_tampilkan_data, text="Data Makanan", font=("Arial", 16), bg=ungu, fg="white").pack(pady=10)
-tk.Button(halaman_tampilkan_data, text="Simpan Data", command=simpan_data, bg="white").pack(pady=10)
-listbox = tk.Listbox(halaman_tampilkan_data, width=50); listbox.pack(pady=10)
-tk.Button(halaman_tampilkan_data, text="Hapus Data", command=hapus_data, bg="white").pack(pady=10)
-tk.Button(halaman_tampilkan_data, text="Edit Data", command=edit_data, bg="white").pack(pady=10)
+button_hapus_makanan.grid(row=2, column=0, padx=5, pady=5)
+button_edit_makanan.grid(row=2, column=1, padx=5, pady=5)
+button_tambah_transaksi.grid(row=2, column=2, padx=5, pady=5)
+button_keluar.grid(row=3, column=1, pady=10, padx=5)
 
-# Tombol untuk Isi Data Baru di bawah Edit Data
-tk.Button(halaman_tampilkan_data, text="Isi Data Baru", command=lambda: switch_page(halaman_nama), bg="white").pack(pady=10)
+# Listbox setup
+listbox = tk.Listbox(root, font=("Arial", 12), width=50, height=10)
+listbox.pack(pady=10)
 
-# Navigasi halaman
-def switch_page(page): page.tkraise()
-
-# Menampilkan halaman awal
-switch_page(halaman_awal)
-tampilkan_data()
-
-root.mainloop()
-conn.close()
+transaksi_listbox = tk.Listbox(root, font=("Arial", 12), width=50, height=5)
+transaksi_listbox.pack(pady
