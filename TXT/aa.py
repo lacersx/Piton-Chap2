@@ -2,260 +2,488 @@ import tkinter as tk
 from tkinter import messagebox
 from datetime import datetime
 
-# Initialize main application window
-root = tk.Tk()
-root.title("Data Makanan & Transaksi")
-root.geometry("500x500")
-root.configure(bg="#A48ACF")
-
-makanan_data = []
-
 class Baca:
-    def baca_file(lokasi_file):
+    @staticmethod
+    def baca_file_kategori(lokasi_file):
         try:
             with open(lokasi_file, 'r') as file:
-                data = file.read().strip()
-            return data
+                lines = file.read().strip().splitlines()
+                category_data = {}
+
+                for line in lines[1:]:  # Skip header line
+                    if ':' in line and line.strip():
+                        try:
+                            id_category, category = line.split(':', 1)
+                            id_category = int(id_category.strip())
+                            category = category.strip()
+                            category_data[id_category] = category
+                        except ValueError as e:
+                            print(f"Error processing line '{line}': {e}")
+                return category_data
         except FileNotFoundError:
             print(f"File {lokasi_file} tidak ditemukan.")
-            return None
+            return {}
 
-def simpan_ke_database():
-    try:
-        nama = data_makanan['nama']
-        kategori = int(data_makanan['kategori'])
-        warna = int(data_makanan['warna'])
+    @staticmethod
+    def baca_file_warna(lokasi_file):
+        try:
+            with open(lokasi_file, 'r') as file:
+                lines = file.read().strip().splitlines()
+                color_data = {}
 
-        # Tambahkan data baru ke list makanan_data
-        makanan_data.append({'nama': nama, 'kategori': kategori, 'warna': warna})
+                for line in lines[1:]:  # Skip header line
+                    if ':' in line and line.strip():
+                        try:
+                            id_color, color = line.split(':', 1)
+                            id_color = int(id_color.strip())
+                            color = color.strip()
+                            color_data[id_color] = color
+                        except ValueError as e:
+                            print(f"Error processing line '{line}': {e}")
+                return color_data
+        except FileNotFoundError:
+            print(f"File {lokasi_file} tidak ditemukan.")
+            return {}
+
+    @staticmethod
+    def baca_file_makanan(lokasi_file):
+        try:
+            with open(lokasi_file, 'r') as file:
+                lines = file.read().strip().splitlines()
+                food_data = []
+                for line in lines[1:]:  # Skip header line
+                    if ':' in line:
+                        try:
+                            parts = line.split(':')
+                            if len(parts) >= 4:
+                                id_food = int(parts[0])
+                                name = parts[1].strip()
+                                category_id = int(parts[2].strip())
+                                color_id = int(parts[3].strip())
+                                food_data.append({
+                                    "id": id_food,
+                                    "name": name,
+                                    "category_id": category_id,
+                                    "color_id": color_id
+                                })
+                        except (ValueError, IndexError) as e:
+                            print(f"Error processing line '{line}': {e}")
+                return food_data
+        except FileNotFoundError:
+            print(f"File {lokasi_file} tidak ditemukan.")
+            return []
+
+    @staticmethod
+    def simpan_file_kategori(lokasi_file, categories):
+        try:
+            with open(lokasi_file, 'w') as file:
+                file.write("ID:Kategori\n")  # Header
+                for id_category, category in categories.items():
+                    file.write(f"{id_category}:{category}\n")
+            return True
+        except Exception as e:
+            print(f"Error saving category file: {e}")
+            return False
+
+    @staticmethod
+    def simpan_file_warna(lokasi_file, colors):
+        try:
+            with open(lokasi_file, 'w') as file:
+                file.write("ID:Warna\n")  # Header
+                for id_color, color in colors.items():
+                    file.write(f"{id_color}:{color}\n")
+            return True
+        except Exception as e:
+            print(f"Error saving color file: {e}")
+            return False
+
+    @staticmethod
+    def simpan_file_makanan(lokasi_file, foods):
+        try:
+            with open(lokasi_file, 'w') as file:
+                file.write("ID:Nama:KategoriID:WarnaID\n")  # Header
+                for food in foods:
+                    file.write(f"{food['id']}:{food['name']}:{food['category_id']}:{food['color_id']}\n")
+            return True
+        except Exception as e:
+            print(f"Error saving food file: {e}")
+            return False
+
+class FoodApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Food Data Management")
+        self.root.geometry("800x600")
+
+        # Initialize data structures
+        self.colors = {}     # Will be populated from file
+        self.foods = []      # Will be populated from file
+        self.categories = {} # Will be populated from file
+        self.transaction_history = []
         
-        # Perbarui tampilan di Listbox
-        tampilkan_data()
+        # Load data from files
+        self.load_data()
+        
+        # Setup UI
+        self.setup_ui()
+        self.update_listbox()
 
-        # Reset data_makanan untuk input baru
-        data_makanan.clear()
-        data_makanan.update({'nama': '', 'kategori': '', 'warna': ''})
+    def load_data(self):
+        # Load categories
+        self.categories = Baca.baca_file_kategori("Data_Kategori.txt")
+        if not self.categories:
+            messagebox.showwarning("Warning", "File kategori tidak ditemukan atau kosong. Silakan tambahkan kategori terlebih dahulu.")
+        
+        # Load colors
+        self.colors = Baca.baca_file_warna("Data_Warna.txt")
+        if not self.colors:
+            messagebox.showwarning("Warning", "File warna tidak ditemukan atau kosong. Silakan tambahkan warna terlebih dahulu.")
+        
+        # Load foods
+        self.foods = Baca.baca_file_makanan("Data_Makanan.txt")
+        if not self.foods:
+            messagebox.showwarning("Warning", "File makanan tidak ditemukan atau kosong.")
 
-        messagebox.showinfo("Berhasil", "Data makanan berhasil disimpan!")
-    
-    except ValueError:
-        messagebox.showerror("Input Error", "Kategori dan Warna harus berupa angka!")
+    def setup_ui(self):
+        # Food List Frame
+        self.food_list_frame = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
+        self.food_list_frame.place(x=20, y=20, width=300, height=500)
+        
+        tk.Label(self.food_list_frame, text="Data Makanan", bg="#bdb2ff", font=("Arial", 12, "bold")).pack()
+        self.food_listbox = tk.Listbox(self.food_list_frame)
+        self.food_listbox.pack(fill="both", expand=True)
+        
+        # Control buttons
+        tk.Button(self.food_list_frame, text="Tambah Data Makanan", command=self.add_food).pack(pady=5)
+        tk.Button(self.food_list_frame, text="Edit Data Makanan", command=self.edit_food).pack(pady=5)
+        tk.Button(self.food_list_frame, text="Hapus Data Makanan", command=self.delete_food).pack(pady=5)
 
-#Fungsi untuk menampilkan data
-def tampilkan_data():
-    listbox.delete(0, tk.END)
-    for idx, makanan in enumerate(makanan_data, start=1):
-        listbox.insert(tk.END, f"{idx}. {makanan['nama']} (Kategori: {kategori_data[makanan['kategori']]}, Warna: {warna_data[makanan['warna']]})")
+        # Kategori buttons
+        tk.Button(self.food_list_frame, text="Tambah Kategori", command=self.show_category_frame).pack(pady=5)
+        tk.Button(self.food_list_frame, text="Hapus Kategori", command=self.show_delete_category_frame).pack(pady=5)
 
-# Fungsi untuk menampilkan transaksi
-def tampilkan_transaksi():
-    transaksi_listbox.delete(0, tk.END)
-    for idx, transaksi in enumerate(transaksi_data, start=1):
-        transaksi_listbox.insert(tk.END, f"{idx}. {transaksi['tanggal']} - {transaksi['nama']} - Rp {transaksi['harga']}")
-
-# Function placeholders for button actions
-def tambah_data():
-    def simpan_input():
-        data_makanan['nama'] = entry_nama.get()
-        data_makanan['kategori'] = entry_kategori.get()
-        data_makanan['warna'] = entry_warna.get()
-        simpan_ke_database()
-        window.destroy()
-    
-    window = tk.Toplevel(root)
-    window.title("Tambah Data")
-    window.geometry("300x250")
-    window.configure(bg="#76608A")
-    
-    tk.Label(window, text="Nama", bg="#76608A", fg="white").pack(pady=5)
-    entry_nama = tk.Entry(window)
-    entry_nama.pack(pady=5)
-    
-    tk.Label(window, text="Kategori (1: Buah, 2: Sayuran, 3: Daging)", bg="#76608A", fg="white").pack(pady=5)
-    entry_kategori = tk.Entry(window)
-    entry_kategori.pack(pady=5)
-    
-    tk.Label(window, text="Warna (1: Merah, 2: Hijau, 3: Kuning)", bg="#76608A", fg="white").pack(pady=5)
-    entry_warna = tk.Entry(window)
-    entry_warna.pack(pady=5)
-    
-    tk.Button(window, text="Simpan", command=simpan_input).pack(pady=10)
+        # Warna buttons
+        tk.Button(self.food_list_frame, text="Tambah Warna", command=self.show_color_frame).pack(pady=5)
+        tk.Button(self.food_list_frame, text="Hapus Warna", command=self.show_delete_color_frame).pack(pady=5)
 
 
-def hapus_data_makanan():
-    selected_makanan = listbox.curselection()
-    selected_transaksi = transaksi_listbox.curselection()
+        # Add Food Frame
+        self.add_food_frame = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
+        self.add_food_frame.place(x=350, y=20, width=400, height=350)
+        
+        tk.Label(self.add_food_frame, text="Tambah Data Makanan", bg="#bdb2ff", font=("Arial", 12, "bold")).pack(pady=10)
+        
+        # Food input fields
+        tk.Label(self.add_food_frame, text="Nama Makanan:").pack()
+        self.food_name_entry = tk.Entry(self.add_food_frame)
+        self.food_name_entry.pack(pady=1)
 
-    if selected_makanan:
-        try:
-            selected = listbox.curselection()[0]
-            del makanan_data[selected]
-            tampilkan_data()
-        except IndexError:
-            messagebox.showwarning("Pilih Data", "Pilih data yang ingin dihapus!")
-    
-    elif selected_transaksi:
-        try:
-            selected = selected_transaksi[0]
-            del transaksi_data[selected]
-            tampilkan_transaksi()
-        except IndexError:
-            messagebox.showwarning("Pilih Data", "Pilih data transaksi yang ingin dihapus!")
-    
-    else:
-        messagebox.showwarning("Pilih Data", "Tidak ada data yang dipilih untuk dihapus!")
+        # Category input fields
+        tk.Label(self.add_food_frame, text="Kategori :").pack(pady=1)
 
-def edit_data_makanan():
-    try:
-        selected = listbox.curselection()[0]
-        makanan_terpilih = makanan_data[selected]
+        # Category dropdown
+        self.food_category_var = tk.StringVar()
+        self.food_category_menu = tk.OptionMenu(self.add_food_frame, self.food_category_var, "")
+        self.update_category_menu()
+        self.food_category_menu.pack()
 
-        def lanjut_edit():
-            nama_makanan = entry_nama.get()
-            kategori = entry_kategori.get()
-            warna = entry_warna.get()
+        # Color input fields
+        tk.Label(self.add_food_frame, text="Warna :").pack(pady=1)
 
-            if nama_makanan and kategori and warna:
-                makanan_terpilih['nama'] = nama_makanan
-                makanan_terpilih['kategori'] = int(kategori)
-                makanan_terpilih['warna'] = int(warna)
-                window.destroy()
-                tampilkan_data()
+        # Color dropdown
+        self.food_color_var = tk.StringVar()
+        self.food_color_menu = tk.OptionMenu(self.add_food_frame, self.food_color_var, "")
+        self.update_color_menu()
+        self.food_color_menu.pack()
+
+        tk.Button(self.add_food_frame, text="Simpan Makanan", command=self.save_food).pack(pady=10)
+
+    def update_category_menu(self):
+        menu = self.food_category_menu["menu"]
+        menu.delete(0, "end")
+        for category in self.categories.values():
+            menu.add_command(label=category, command=lambda x=category: self.food_category_var.set(x))
+        if self.categories:
+            self.food_category_var.set(list(self.categories.values())[0])
+
+    def update_color_menu(self):
+        menu = self.food_color_menu["menu"]
+        menu.delete(0, "end")
+        for color in self.colors.values():
+            menu.add_command(label=color, command=lambda x=color: self.food_color_var.set(x))
+        if self.colors:
+            self.food_color_var.set(list(self.colors.values())[0])
+
+    # Category management
+    def show_category_frame(self):
+        self.category_frame = tk.Toplevel(self.root)
+        self.category_frame.title("Tambah Kategori")
+        self.category_frame.geometry("300x150")
+
+        tk.Label(self.category_frame, text="Nama Kategori Baru:").pack(pady=10)
+        self.new_category_entry = tk.Entry(self.category_frame)
+        self.new_category_entry.pack(pady=10)
+
+        tk.Button(self.category_frame, text="Tambah Kategori", command=self.add_category).pack(pady=10)
+
+    def add_category(self):
+        category = self.new_category_entry.get().strip()
+        if category:
+            # Generate new category ID
+            new_id = max(self.categories.keys(), default=0) + 1
+            self.categories[new_id] = category
+        
+            # Save to file
+            if Baca.simpan_file_kategori("Data_Kategori.txt", self.categories):
+                messagebox.showinfo("Success", "Kategori baru berhasil ditambahkan")
+                self.new_category_entry.delete(0, tk.END)
+                self.update_category_menu()
             else:
-                messagebox.showwarning("Input Error", "Semua field harus diisi!")
-
-        window = tk.Toplevel(root)
-        window.title("Edit Makanan")
-        window.geometry("300x200")
-        window.configure(bg="#76608A")
-        
-        label_nama = tk.Label(window, text="Edit Nama", font=("Arial", 12), bg="#76608A", fg="white")
-        label_nama.pack(pady=10)
-        entry_nama = tk.Entry(window, font=("Arial", 12))
-        entry_nama.insert(0, makanan_terpilih['nama'])
-        entry_nama.pack(pady=10)
-
-        label_kategori = tk.Label(window, text="Edit Kategori", font=("Arial", 12), bg="#76608A", fg="white")
-        label_kategori.pack(pady=10)
-        entry_kategori = tk.Entry(window, font=("Arial", 12))
-        entry_kategori.insert(0, makanan_terpilih['kategori'])
-        entry_kategori.pack(pady=10)
-
-        label_warna = tk.Label(window, text="Edit Warna", font=("Arial", 12), bg="#76608A", fg="white")
-        label_warna.pack(pady=10)
-        entry_warna = tk.Entry(window, font=("Arial", 12))
-        entry_warna.insert(0, makanan_terpilih['warna'])
-        entry_warna.pack(pady=10)
-
-        simpan_button = tk.Button(window, text="Simpan", command=lanjut_edit, bg="white")
-        simpan_button.pack(pady=10)
-
-    except IndexError:
-        messagebox.showwarning("Pilih Data", "Pilih data yang ingin diedit!")
-
-
-def hapus_data_lain():
-    pass
-
-def edit_data_lain():
-    pass
-
-def tambah_transaksi():
-    window = tk.Toplevel(root)
-    window.title("Tambah Transaksi")
-    window.geometry("300x250")
-    window.configure(bg="#76608A")
-
-    label_nama = tk.Label(window, text="Pilih Makanan", font=("Arial", 12), bg="#76608A", fg="white")
-    label_nama.pack(pady=10)
-
-    makanan_var = tk.StringVar(window)
-    makanan_var.set(makanan_data[0]['nama'])  # Default pilihan pertama
-
-    makanan_option = tk.OptionMenu(window, makanan_var, *[m['nama'] for m in makanan_data])
-    makanan_option.pack(pady=10)
-
-    label_harga = tk.Label(window, text="Masukkan Harga", font=("Arial", 12), bg="#76608A", fg="white")
-    label_harga.pack(pady=10)
-
-    entry_harga = tk.Entry(window, font=("Arial", 12))
-    entry_harga.pack(pady=10)
-
-    def simpan_transaksi():
-        makanan = makanan_var.get()
-        harga = entry_harga.get()
-
-        if harga:
-            transaksi_data.append({
-                'tanggal': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                'nama': makanan,
-                'harga': harga
-            })
-            window.destroy()
-            tampilkan_transaksi()
+                messagebox.showerror("Error", "Gagal menyimpan kategori baru")
         else:
-            messagebox.showwarning("Input Error", "Harga Harus Diisi!")
+            messagebox.showwarning("Warning", "Nama kategori tidak boleh kosong")
 
-    simpan_button = tk.Button(window, text="Simpan Transaksi", command=simpan_transaksi, bg="white")
-    simpan_button.pack(pady=10)
+    def show_delete_category_frame(self):
+        if not self.categories:
+            messagebox.showwarning("Warning", "Tidak ada kategori yang dapat dihapus")
+            return
+        
+        self.delete_category_frame = tk.Toplevel(self.root)
+        self.delete_category_frame.title("Hapus Kategori")
+        self.delete_category_frame.geometry("300x200")
 
-# Variabel global untuk menyimpan input sementara
-data_makanan = {'nama': '', 'kategori': '', 'warna': ''}
-
-
-def simpan_data():
-    warna = entry_warna.get()
-    if warna:
-        data_makanan['warna'] = warna
-        window.destroy()
-        simpan_ke_database()
-    else:
-        messagebox.showwarning("Input Error", "Warna Harus Diisi!")
+        tk.Label(self.delete_category_frame, text="Pilih Kategori untuk Dihapus:").pack(pady=10)
     
-    simpan_button = tk.Button(window, text="Selesai", command=simpan_data, bg="white")
-    simpan_button.pack(pady=10)
+        # Buat Listbox untuk menampilkan kategori
+        self.category_listbox = tk.Listbox(self.delete_category_frame)
+        self.category_listbox.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
+    
+        # Isi Listbox dengan kategori yang ada
+        for category_id, category_name in self.categories.items():
+            self.category_listbox.insert(tk.END, f"{category_id}: {category_name}")
 
-def keluar_aplikasi():
-    root.quit()
+        tk.Button(self.delete_category_frame, text="Hapus Kategori", 
+                command=self.delete_category).pack(pady=10)
 
-# Main Frame setup for better structure
-frame_main = tk.Frame(root, bg="#A48ACF")
-frame_main.pack(expand=True, fill="both")
+    def delete_category(self):
+        selected = self.category_listbox.curselection()
+        if not selected:
+            messagebox.showwarning("Warning", "Pilih kategori yang akan dihapus")
+            return
 
-# Add "Tambah Data" button at the top center
-button_tambah = tk.Button(frame_main, text="Tambah Data", command=tambah_data, width=20)
-button_tambah.grid(row=0, column=1, pady=(20, 10))
+        # Dapatkan ID kategori yang dipilih
+        selected_item = self.category_listbox.get(selected[0])
+        category_id = int(selected_item.split(':')[0])
+    
+        # Periksa apakah kategori sedang digunakan
+        for food in self.foods:
+            if food['category_id'] == category_id:
+                messagebox.showwarning("Warning", 
+                    "Kategori ini sedang digunakan oleh makanan. Hapus atau ubah makanan terlebih dahulu.")
+                return
+    
+        # Hapus kategori
+        del self.categories[category_id]
+    
+        # Simpan perubahan ke file
+        if Baca.simpan_file_kategori("Data_Kategori.txt", self.categories):
+            messagebox.showinfo("Success", "Kategori berhasil dihapus")
+            self.delete_category_frame.destroy()
+            self.update_category_menu()
+        else:
+            messagebox.showerror("Error", "Gagal menyimpan perubahan")
 
-# Display area for 'data_makanan'
-label_makanan = tk.Label(frame_main, text="Tampilan Data Makanan", bg="white", width=40, height=10)
-label_makanan.grid(row=1, column=1, pady=10, padx=10)
+    # Color management
+    def show_color_frame(self):
+        self.color_frame = tk.Toplevel(self.root)
+        self.color_frame.title("Tambah Warna")
+        self.color_frame.geometry("300x150")
 
-# Listbox untuk menampilkan data makanan
-listbox = tk.Listbox(root, font=("Arial", 12), width=50, height=10)
-listbox.pack(pady=10)
+        tk.Label(self.color_frame, text="Nama Warna Baru:").pack(pady=10)
+        self.new_color_entry = tk.Entry(self.color_frame)
+        self.new_color_entry.pack(pady=10)
 
-# Row with multiple buttons under 'data_makanan'
-button_hapus_makanan = tk.Button(frame_main, text="Hapus Data Makanan", command=hapus_data_makanan, width=18)
-button_edit_makanan = tk.Button(frame_main, text="Edit Data Makanan", command=edit_data_makanan, width=18)
-button_tambah_transaksi = tk.Button(frame_main, text="Tambah Transaksi", command=tambah_transaksi, width=18)
-button_hapus_lain = tk.Button(frame_main, text="Hapus Data Lain", command=hapus_data_lain, width=18)
-button_edit_lain = tk.Button(frame_main, text="Edit Data Lain", command=edit_data_lain, width=18)
+        tk.Button(self.color_frame, text="Tambah Warna", command=self.add_color).pack(pady=10)
 
-button_hapus_makanan.grid(row=2, column=0, padx=5, pady=5)
-button_edit_makanan.grid(row=2, column=1, padx=5, pady=5)
-button_tambah_transaksi.grid(row=2, column=2, padx=5, pady=5)
-button_hapus_lain.grid(row=3, column=0, padx=5, pady=5)
-button_edit_lain.grid(row=3, column=2, padx=5, pady=5)
+    def add_color(self):
+        color = self.new_color_entry.get().strip()
+        if color:
+            # Generate new color ID
+            new_id = max(self.colors.keys(), default=0) + 1
+            self.colors[new_id] = color
+        
+            # Save to file
+            if Baca.simpan_file_warna("Data_Warna.txt", self.colors):
+                messagebox.showinfo("Success", "Warna baru berhasil ditambahkan")
+                self.new_color_entry.delete(0, tk.END)
+                self.update_color_menu()
+            else:
+                messagebox.showerror("Error", "Gagal menyimpan warna baru")
+        else:
+            messagebox.showwarning("Warning", "Nama warna tidak boleh kosong")
 
-# Display area for 'data_transaksi'
-label_transaksi = tk.Label(frame_main, text="Tampilan Data Transaksi", bg="white", width=40, height=10)
-label_transaksi.grid(row=4, column=1, pady=10, padx=10)
+    # Tambahkan fungsi-fungsi berikut untuk menghapus warna:
+    def show_delete_color_frame(self):
+        if not self.colors:
+            messagebox.showwarning("Warning", "Tidak ada warna yang dapat dihapus")
+            return
+        
+        self.delete_color_frame = tk.Toplevel(self.root)
+        self.delete_color_frame.title("Hapus Warna")
+        self.delete_color_frame.geometry("300x200")
 
-# Bottom row with "Simpan Data" and "Keluar Aplikasi" buttons
-button_simpan = tk.Button(frame_main, text="Simpan Data", command=simpan_data, width=18)
-button_keluar = tk.Button(frame_main, text="Keluar Aplikasi", command=keluar_aplikasi, width=18)
+        tk.Label(self.delete_color_frame, text="Pilih Warna untuk Dihapus:").pack(pady=10)
+    
+        # Buat Listbox untuk menampilkan warna
+        self.color_listbox = tk.Listbox(self.delete_color_frame)
+        self.color_listbox.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
+    
+        # Isi Listbox dengan warna yang ada
+        for color_id, color_name in self.colors.items():
+            self.color_listbox.insert(tk.END, f"{color_id}: {color_name}")
 
-button_simpan.grid(row=5, column=0, pady=10, padx=5)
-button_keluar.grid(row=5, column=2, pady=10, padx=5)
+        tk.Button(self.delete_color_frame, text="Hapus Warna", 
+                command=self.delete_color).pack(pady=10)
 
-root.mainloop()
+    def delete_color(self):
+        selected = self.color_listbox.curselection()
+        if not selected:
+            messagebox.showwarning("Warning", "Pilih warna yang akan dihapus")
+            return
+
+        # Dapatkan ID warna yang dipilih
+        selected_item = self.color_listbox.get(selected[0])
+        color_id = int(selected_item.split(':')[0])
+    
+        # Periksa apakah warna sedang digunakan
+        for food in self.foods:
+            if food['color_id'] == color_id:
+                messagebox.showwarning("Warning", 
+                    "Warna ini sedang digunakan oleh makanan. Hapus atau ubah makanan terlebih dahulu.")
+                return
+    
+        # Hapus warna
+        del self.colors[color_id]
+    
+        # Simpan perubahan ke file
+        if Baca.simpan_file_warna("Data_Warna.txt", self.colors):
+            messagebox.showinfo("Success", "Warna berhasil dihapus")
+            self.delete_color_frame.destroy()
+            self.update_color_menu()
+        else:
+            messagebox.showerror("Error", "Gagal menyimpan perubahan")
+
+    def update_listbox(self):
+        self.food_listbox.delete(0, tk.END)
+        for food in self.foods:
+            category_name = self.categories.get(food['category_id'], 'Unknown')
+            color_name = self.colors.get(food['color_id'], 'Unknown')
+            self.food_listbox.insert(tk.END, f"{food['name']} - {category_name} - {color_name}")
+
+    def get_id_by_value(self, dictionary, value):
+        for key, val in dictionary.items():
+            if val == value:
+                return key
+        return None
+
+    def save_food(self):
+        name = self.food_name_entry.get().strip()
+        color = self.food_color_var.get()
+        category = self.food_category_var.get()
+        
+        if name and color and category:
+            color_id = self.get_id_by_value(self.colors, color)
+            category_id = self.get_id_by_value(self.categories, category)
+            
+            if color_id is None:
+                messagebox.showwarning("Error", "Pilih warna yang valid")
+                return
+                
+            if category_id is None:
+                messagebox.showwarning("Error", "Pilih kategori yang valid")
+                return
+            
+            new_id = max([food['id'] for food in self.foods], default=0) + 1
+            
+            new_food = {
+                "id": new_id,
+                "name": name,
+                "category_id": category_id,
+                "color_id": color_id
+            }
+            
+            self.foods.append(new_food)
+            
+            # Save to file
+            if Baca.simpan_file_makanan("Data_Makanan.txt", self.foods):
+                self.update_listbox()
+                self.food_name_entry.delete(0, tk.END)
+                messagebox.showinfo("Success", "Data makanan berhasil disimpan")
+            else:
+                messagebox.showerror("Error", "Gagal menyimpan data makanan")
+        else:
+            messagebox.showwarning("Error", "Semua field harus diisi!")
+
+    def add_food(self):
+        self.food_name_entry.delete(0, tk.END)
+        if self.colors:
+            self.food_color_var.set(list(self.colors.values())[0])
+        if self.categories:
+            self.food_category_var.set(list(self.categories.values())[0])
+
+    def edit_food(self):
+        selected = self.food_listbox.curselection()
+        if selected:
+            index = selected[0]
+            if 0 <= index < len(self.foods):
+                food = self.foods[index]
+                
+                self.food_name_entry.delete(0, tk.END)
+                self.food_name_entry.insert(0, food['name'])
+                
+                if food['color_id'] in self.colors:
+                    self.food_color_var.set(self.colors[food['color_id']])
+                if food['category_id'] in self.categories:
+                    self.food_category_var.set(self.categories[food['category_id']])
+                
+                # Remove the old entry
+                self.foods.pop(index)
+                self.update_listbox()
+            else:
+                messagebox.showwarning("Error", "Invalid selection index")
+        else:
+            messagebox.showwarning("Selection Error", "Pilih makanan untuk diedit")
+
+
+    def delete_food(self):
+        selected = self.food_listbox.curselection()
+        if selected:
+            index = selected[0]
+            if 0 <= index < len(self.foods):
+                food = self.foods.pop(index)
+                
+                # Save to file
+                if Baca.simpan_file_makanan("Data_Makanan.txt", self.foods):
+                    self.update_listbox()
+                    
+                    # Record transaction
+                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    category_name = self.categories.get(food['category_id'], 'Unknown')
+                    color_name = self.colors.get(food['color_id'], 'Unknown')
+                    
+                    self.transaction_history.append(
+                        f"{timestamp} - Deleted: {food['name']} - {category_name} - {color_name}"
+                    )
+                    
+                    messagebox.showinfo("Success", "Data makanan berhasil dihapus")
+                else:
+                    messagebox.showerror("Error", "Gagal menyimpan perubahan")
+            else:
+                messagebox.showwarning("Error", "Invalid selection index")
+        else:
+            messagebox.showwarning("Selection Error", "Pilih makanan untuk dihapus")
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = FoodApp(root)
+    root.mainloop()
