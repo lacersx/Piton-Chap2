@@ -1,0 +1,3 @@
+Timestamp:FoodName:Quantity:Category:Color
+2024-11-14 10:25:38:Sayuran:12:Mineral:Hijau
+2024-11-14 10:25:46:Kentang:31:Protein:Merah
