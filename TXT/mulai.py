@@ -164,7 +164,6 @@ class FoodApp:
         self.category_window = None
         self.add_category_listbox = None
         self.delete_category_listbox = None
-        self.transaction_listbox = None  # Initialize here
         
         # Load data from files
         self.load_data()
@@ -189,16 +188,10 @@ class FoodApp:
         if not self.foods:
             messagebox.showwarning("Warning", "File makanan tidak ditemukan atau kosong.")
 
-        # Load transactions
-        self.transaction_history = Baca.baca_file_transaksi("Data_Transaksi.txt")
-        if not self.transaction_history:
-            messagebox.showwarning("Warning", "File transaksi tidak ditemukan atau kosong.")
-        else:
-            self.update_transaction_list()  # Update the transaction list display
-        def setup_ui(self):
-            # Food List Frame
-            self.food_list_frame = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
-            self.food_list_frame.place(x=20, y=20, width=300, height=500)
+    def setup_ui(self):
+        # Food List Frame
+        self.food_list_frame = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
+        self.food_list_frame.place(x=20, y=20, width=300, height=500)
         
         tk.Label(self.food_list_frame, text="Data Makanan", bg="#bdb2ff", font=("Arial", 12, "bold")).pack()
         self.food_listbox = tk.Listbox(self.food_list_frame)
@@ -553,7 +546,7 @@ class FoodApp:
 
         # Setup Add Transaction Tab
         tk.Label(add_frame, text="Tambah Transaksi Baru", font=("Arial", 12, "bold")).pack(pady=10)
-
+        
         # Food selection
         tk.Label(add_frame, text="Pilih Makanan:").pack(pady=5)
         self.transaction_food_var = tk.StringVar()
@@ -574,17 +567,15 @@ class FoodApp:
         tk.Label(add_frame, text="Daftar Transaksi:", font=("Arial", 10, "bold")).pack(pady=5)
         self.transaction_listbox = tk.Listbox(add_frame, width=50, height=10)
         self.transaction_listbox.pack(pady=5, padx=10)
-
-        # Update the transaction list after initializing the listbox
         self.update_transaction_list()
 
         # Setup Delete Transaction Tab
         tk.Label(delete_frame, text="Hapus Transaksi", font=("Arial", 12, "bold")).pack(pady=10)
-
+        
         # Transaction selection for deletion
         self.delete_transaction_listbox = tk.Listbox(delete_frame, width=50, height=15)
         self.delete_transaction_listbox.pack(pady=10, padx=10)
-
+        
         # Delete button
         tk.Button(delete_frame, text="Hapus Transaksi Terpilih", 
                  command=self.delete_transaction).pack(pady=10)
@@ -643,7 +634,7 @@ class FoodApp:
                 messagebox.showerror("Error", "Gagal menyimpan transaksi")
         else:
             messagebox.showerror("Error", "Makanan tidak ditemukan")
-
+            
     def delete_transaction(self):
         selected = self.delete_transaction_listbox.curselection()
         if not selected:
@@ -792,3 +783,4 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = FoodApp(root)
     root.mainloop()
+  
