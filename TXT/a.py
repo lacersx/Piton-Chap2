@@ -188,6 +188,11 @@ class FoodApp:
         if not self.foods:
             messagebox.showwarning("Warning", "File makanan tidak ditemukan atau kosong.")
 
+        self.transaction_history = Baca.baca_file_transaksi("Data_Transaksi.txt")
+        if not self.transaction_history:
+            messagebox.showwarning("Warning", "File makanan tidak ditemukan atau kosong.")
+
+
     def setup_ui(self):
         # Food List Frame
         self.food_list_frame = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
@@ -530,7 +535,7 @@ class FoodApp:
     def show_transaction_menu(self):
         self.transaction_window = tk.Toplevel(self.root)
         self.transaction_window.title("Menu Transaksi")
-        self.transaction_window.geometry("600x500")
+        self.transaction_window.geometry("800x600")
 
         # Create notebook for tabs
         notebook = ttk.Notebook(self.transaction_window)
@@ -540,9 +545,9 @@ class FoodApp:
         add_frame = ttk.Frame(notebook)
         notebook.add(add_frame, text="Tambah Transaksi")
 
-        # Delete Transaction Tab
-        delete_frame = ttk.Frame(notebook)
-        notebook.add(delete_frame, text="Hapus Transaksi")
+        # Transaction History Tab
+        history_frame = ttk.Frame(notebook)
+        notebook.add(history_frame, text="Riwayat Transaksi")
 
         # Setup Add Transaction Tab
         tk.Label(add_frame, text="Tambah Transaksi Baru", font=("Arial", 12, "bold")).pack(pady=10)
@@ -563,31 +568,103 @@ class FoodApp:
         tk.Button(add_frame, text="Tambah Transaksi", 
                  command=self.add_transaction).pack(pady=10)
 
-        # Transaction list
-        tk.Label(add_frame, text="Daftar Transaksi:", font=("Arial", 10, "bold")).pack(pady=5)
-        self.transaction_listbox = tk.Listbox(add_frame, width=50, height=10)
-        self.transaction_listbox.pack(pady=5, padx=10)
-        self.update_transaction_list()
+        # Setup Transaction History Tab
+        tk.Label(history_frame, text="Riwayat Transaksi", font=("Arial", 12, "bold")).pack(pady=10)
 
-        # Setup Delete Transaction Tab
-        tk.Label(delete_frame, text="Hapus Transaksi", font=("Arial", 12, "bold")).pack(pady=10)
+        # Treeview for transactions
+        self.transaction_treeview = ttk.Treeview(history_frame, columns=("Tanggal", "Makanan", "Jumlah", "Kategori", "Warna"), show="headings")
         
-        # Transaction selection for deletion
-        self.delete_transaction_listbox = tk.Listbox(delete_frame, width=50, height=15)
-        self.delete_transaction_listbox.pack(pady=10, padx=10)
+        # Define column headings
+        self.transaction_treeview.heading("Tanggal", text="Tanggal", command=lambda: self.sort_treeview("Tanggal", False))
+        self.transaction_treeview.heading("Makanan", text="Makanan", command=lambda: self.sort_treeview("Makanan", False))
+        self.transaction_treeview.heading("Jumlah", text="Jumlah", command=lambda: self.sort_treeview("Jumlah", False))
+        self.transaction_treeview.heading("Kategori", text="Kategori", command=lambda: self.sort_treeview("Kategori", False))
+        self.transaction_treeview.heading("Warna", text="Warna", command=lambda: self.sort_treeview("Warna", False))
         
+        # Set column widths
+        for col in ("Tanggal", "Makanan", "Jumlah", "Kategori", "Warna"):
+            self.transaction_treeview.column(col, anchor="center", width=100)
+        
+        self.transaction_treeview.pack(fill="both", expand=True, padx=10, pady=10)
+
         # Delete button
-        tk.Button(delete_frame, text="Hapus Transaksi Terpilih", 
+        tk.Button(history_frame, text="Hapus Transaksi Terpilih", 
                  command=self.delete_transaction).pack(pady=10)
 
-        # Populate delete transaction listbox
-        self.update_delete_transaction_list()
+        # Filter input
+        filter_frame = tk.Frame(history_frame)
+        filter_frame.pack(pady=10)
 
-    def update_food_menu(self):
-        food_names = [food['name'] for food in self.foods]
-        self.transaction_food_menu['values'] = food_names
-        if food_names:
-            self.transaction_food_menu.set(food_names[0])
+        tk.Label(filter_frame, text="Filter:").pack(side=tk.LEFT, padx=5)
+        self.filter_entry = tk.Entry(filter_frame)
+        self.filter_entry.pack(side=tk.LEFT, padx=5)
+        
+        tk.Button(filter_frame, text="Terapkan Filter", command=self.apply_transaction_filter).pack(side=tk.LEFT, padx=5)
+        tk.Button(filter_frame, text="Reset Filter", command=self.reset_transaction_filter).pack(side=tk.LEFT, padx=5)
+
+        # Populate treeview initially
+        self.update_transaction_treeview()
+
+    def sort_treeview(self, col, reverse):
+        """Sort treeview by column"""
+        data = [(self.transaction_treeview.set(child, col), child) for child in self.transaction_treeview.get_children('')]
+        
+        # Handle numeric sorting for 'Jumlah'
+        if col == "Jumlah":
+            data = sorted(data, key=lambda x: int(x[0]), reverse=reverse)
+        else:
+            data = sorted(data, key=lambda x: x[0], reverse=reverse)
+        
+        for index, (val, child) in enumerate(data):
+            self.transaction_treeview.move(child, '', index)
+        
+        # Toggle sort direction
+        self.transaction_treeview.heading(col, command=lambda: self.sort_treeview(col, not reverse))
+
+    def apply_transaction_filter(self):
+        """Apply filter to transaction treeview"""
+        filter_text = self.filter_entry.get().lower().strip()
+        
+        # Remove all items
+        for i in self.transaction_treeview.get_children():
+            self.transaction_treeview.delete(i)
+        
+        # Reinsert matching items
+        for transaction in self.transaction_history:
+            if (filter_text == "" or 
+                filter_text in transaction['timestamp'].lower() or 
+                filter_text in transaction['food_name'].lower() or
+                filter_text in str(transaction['quantity']).lower() or
+                filter_text in transaction['category'].lower() or
+                filter_text in transaction['color'].lower()):
+                self.transaction_treeview.insert("", "end", values=(
+                    transaction['timestamp'], 
+                    transaction['food_name'], 
+                    transaction['quantity'], 
+                    transaction['category'], 
+                    transaction['color']
+                ))
+
+    def reset_transaction_filter(self):
+        """Reset filter and show all transactions"""
+        self.filter_entry.delete(0, tk.END)
+        self.update_transaction_treeview()
+
+    def update_transaction_treeview(self):
+        """Update treeview with all transactions"""
+        # Clear existing items
+        for i in self.transaction_treeview.get_children():
+            self.transaction_treeview.delete(i)
+        
+        # Insert transactions
+        for transaction in self.transaction_history:
+            self.transaction_treeview.insert("", "end", values=(
+                transaction['timestamp'], 
+                transaction['food_name'], 
+                transaction['quantity'], 
+                transaction['category'], 
+                transaction['color']
+            ))
 
     def add_transaction(self):
         food_name = self.transaction_food_var.get()
@@ -608,7 +685,7 @@ class FoodApp:
         # Find the selected food in the foods list
         selected_food = next((food for food in self.foods if food['name'] == food_name), None)
         if selected_food:
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            timestamp = datetime.now().strftime("%Y-%m-%d")
             category_name = self.categories.get(selected_food['category_id'], 'Unknown')
             color_name = self.colors.get(selected_food['color_id'], 'Unknown')
             
@@ -636,25 +713,37 @@ class FoodApp:
             messagebox.showerror("Error", "Makanan tidak ditemukan")
             
     def delete_transaction(self):
-        selected = self.delete_transaction_listbox.curselection()
-        if not selected:
+        """Delete selected transaction from treeview"""
+        selected_item = self.transaction_treeview.selection()
+        if not selected_item:
             messagebox.showwarning("Error", "Pilih transaksi yang akan dihapus")
             return
 
-        index = selected[0]
-        if 0 <= index < len(self.transaction_history):
-            self.transaction_history.pop(index)
+        # Get values of selected transaction
+        values = self.transaction_treeview.item(selected_item[0])['values']
+        
+        # Find and remove the matching transaction
+        matching_transactions = [
+            t for t in self.transaction_history 
+            if (t['timestamp'] == values[0] and 
+                t['food_name'] == values[1] and 
+                t['quantity'] == values[2] and 
+                t['category'] == values[3] and 
+                t['color'] == values[4])
+        ]
+        
+        if matching_transactions:
+            self.transaction_history.remove(matching_transactions[0])
             
             # Save changes to file
             if Baca.simpan_file_transaksi("Data_Transaksi.txt", self.transaction_history):
-                self.update_transaction_list()
-                self.update_delete_transaction_list()
+                self.update_transaction_treeview()
                 messagebox.showinfo("Success", "Transaksi berhasil dihapus")
             else:
                 messagebox.showerror("Error", "Gagal menyimpan perubahan transaksi")
         else:
-            messagebox.showerror("Error", "Indeks transaksi tidak valid")
-    
+            messagebox.showerror("Error", "Transaksi tidak ditemukan")
+
     def update_transaction_list(self):
         self.transaction_listbox.delete(0, tk.END)
         for transaction in self.transaction_history:

@@ -188,6 +188,11 @@ class FoodApp:
         if not self.foods:
             messagebox.showwarning("Warning", "File makanan tidak ditemukan atau kosong.")
 
+        self.transaction_history = Baca.baca_file_transaksi("Data_Transaksi.txt")
+        if not self.transaction_history:
+            messagebox.showwarning("Warning", "File makanan tidak ditemukan atau kosong.")
+
+
     def setup_ui(self):
         # Food List Frame
         self.food_list_frame = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
@@ -542,7 +547,7 @@ class FoodApp:
 
         # Delete Transaction Tab
         delete_frame = ttk.Frame(notebook)
-        notebook.add(delete_frame, text="Hapus Transaksi")
+        notebook.add(delete_frame, text="Riwayat Transaksi")
 
         # Setup Add Transaction Tab
         tk.Label(add_frame, text="Tambah Transaksi Baru", font=("Arial", 12, "bold")).pack(pady=10)
@@ -570,7 +575,7 @@ class FoodApp:
         self.update_transaction_list()
 
         # Setup Delete Transaction Tab
-        tk.Label(delete_frame, text="Hapus Transaksi", font=("Arial", 12, "bold")).pack(pady=10)
+        tk.Label(delete_frame, text="Riwayat Transaksi", font=("Arial", 12, "bold")).pack(pady=10)
         
         # Transaction selection for deletion
         self.delete_transaction_listbox = tk.Listbox(delete_frame, width=50, height=15)
@@ -608,7 +613,7 @@ class FoodApp:
         # Find the selected food in the foods list
         selected_food = next((food for food in self.foods if food['name'] == food_name), None)
         if selected_food:
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            timestamp = datetime.now().strftime("%Y-%m-%d")
             category_name = self.categories.get(selected_food['category_id'], 'Unknown')
             color_name = self.colors.get(selected_food['color_id'], 'Unknown')
             
