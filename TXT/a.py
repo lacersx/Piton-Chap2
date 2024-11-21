@@ -164,6 +164,7 @@ class FoodApp:
         self.category_window = None
         self.add_category_listbox = None
         self.delete_category_listbox = None
+        self.delete_transaction_listbox = None  # Listbox for deleting transactions
         
         # Load data from files
         self.load_data()
@@ -202,6 +203,18 @@ class FoodApp:
         self.food_listbox = tk.Listbox(self.food_list_frame)
         self.food_listbox.pack(fill="both", expand=True)
         
+        # Frame untuk transaksi (dapat diletakkan di luar, tetapi tersembunyi jika belum digunakan)
+        self.transaction_frame = tk.Frame(self.root)
+        self.transaction_frame.place(x=350, y=300, width=400, height=200)  # Letakkan sesuai desain Anda
+
+        # Listbox untuk transaksi
+        self.delete_transaction_listbox = tk.Listbox(self.transaction_frame, width=50, height=10)
+        self.delete_transaction_listbox.pack(pady=5, padx=5)
+        self.transaction_frame.place_forget()  # Sembunyikan saat awal
+
+        # Tombol hapus transaksi (tetap ada meskipun listbox disembunyikan)
+        tk.Button(self.root, text="Hapus Transaksi", command=self.delete_transaction).place(x=150, y=520)
+
         # Control buttons
         tk.Button(self.food_list_frame, text="Tambah Data Makanan", command=self.add_food).pack(pady=5)
         tk.Button(self.food_list_frame, text="Edit Data Makanan", command=self.edit_food).pack(pady=5)
@@ -713,36 +726,21 @@ class FoodApp:
             messagebox.showerror("Error", "Makanan tidak ditemukan")
             
     def delete_transaction(self):
-        """Delete selected transaction from treeview"""
-        selected_item = self.transaction_treeview.selection()
-        if not selected_item:
+        selected = self.delete_transaction_listbox.curselection()
+        if not selected:
             messagebox.showwarning("Error", "Pilih transaksi yang akan dihapus")
             return
 
-        # Get values of selected transaction
-        values = self.transaction_treeview.item(selected_item[0])['values']
+        index = selected[0]
+        if 0 <= index < len(self.transaction_history):
+            self.transaction_history.pop(index)
         
-        # Find and remove the matching transaction
-        matching_transactions = [
-            t for t in self.transaction_history 
-            if (t['timestamp'] == values[0] and 
-                t['food_name'] == values[1] and 
-                t['quantity'] == values[2] and 
-                t['category'] == values[3] and 
-                t['color'] == values[4])
-        ]
-        
-        if matching_transactions:
-            self.transaction_history.remove(matching_transactions[0])
-            
-            # Save changes to file
+            # Simpan perubahan ke file
             if Baca.simpan_file_transaksi("Data_Transaksi.txt", self.transaction_history):
-                self.update_transaction_treeview()
+                self.update_delete_transaction_list()
                 messagebox.showinfo("Success", "Transaksi berhasil dihapus")
             else:
                 messagebox.showerror("Error", "Gagal menyimpan perubahan transaksi")
-        else:
-            messagebox.showerror("Error", "Transaksi tidak ditemukan")
 
     def update_transaction_list(self):
         self.transaction_listbox.delete(0, tk.END)
@@ -757,6 +755,7 @@ class FoodApp:
             self.delete_transaction_listbox.insert(tk.END, 
                 f"{transaction['timestamp']} - {transaction['food_name']} "
                 f"({transaction['quantity']}) - {transaction['category']} - {transaction['color']}")
+
 
     def update_listbox(self):
         self.food_listbox.delete(0, tk.END)
