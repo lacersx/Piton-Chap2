@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 from datetime import datetime
+from tkcalendar import Calendar
 
 class Baca:
     @staticmethod
@@ -155,6 +156,7 @@ class FoodApp:
         self.root.geometry("800x600")
 
         # Initialize data structures
+        self.foodid =0
         self.colors = {}     # Will be populated from file
         self.foods = []      # Will be populated from file
         self.categories = {} # Will be populated from file
@@ -704,29 +706,31 @@ class FoodApp:
                 messagebox.showwarning("Error", "Pilih kategori yang valid")
                 return
             
-            new_id = max([food['id'] for food in self.foods], default=0) + 1
-            
-            new_food = {
-                "id": new_id,
-                "name": name,
-                "category_id": category_id,
-                "color_id": color_id
-            }
-            
-            self.foods.append(new_food)
-            
-            # Save to file
+            if self.foodid is not None:
+                # Update existing food
+                food = next((f for f in self.foods if f['id'] == self.foodid), None)
+                if food:
+                    food.update({"name": name, "color_id": color_id, "category_id": category_id})
+            else:
+            # Add new food
+                new_id = max([food['id'] for food in self.foods], default=0) + 1
+                self.foods.append({"id": new_id, "name": name, "color_id": color_id, "category_id": category_id})
+
             if Baca.simpan_file_makanan("Data_Makanan.txt", self.foods):
                 self.update_listbox()
                 self.food_name_entry.delete(0, tk.END)
+                self.food_id = None  # Reset after saving
                 messagebox.showinfo("Success", "Data makanan berhasil disimpan")
             else:
                 messagebox.showerror("Error", "Gagal menyimpan data makanan")
+
         else:
             messagebox.showwarning("Error", "Semua field harus diisi!")
 
     def add_food(self):
         self.food_name_entry.delete(0, tk.END)
+        self.foodid = None  # Reset food_id for new entry
+
         if self.colors:
             self.food_color_var.set(list(self.colors.values())[0])
         if self.categories:
@@ -738,6 +742,7 @@ class FoodApp:
             index = selected[0]
             if 0 <= index < len(self.foods):
                 food = self.foods[index]
+                self.foodid = food['id']
                 
                 self.food_name_entry.delete(0, tk.END)
                 self.food_name_entry.insert(0, food['name'])
@@ -748,7 +753,7 @@ class FoodApp:
                     self.food_category_var.set(self.categories[food['category_id']])
                 
                 # Remove the old entry
-                self.foods.pop(index)
+                #self.foods.pop(index)
                 self.update_listbox()
             else:
                 messagebox.showwarning("Error", "Invalid selection index")
@@ -768,7 +773,7 @@ class FoodApp:
                     self.update_listbox()
                     
                     # Record transaction
-                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    timestamp = datetime.now().strftime("%Y-%m-%d")
                     category_name = self.categories.get(food['category_id'], 'Unknown')
                     color_name = self.colors.get(food['color_id'], 'Unknown')
                     

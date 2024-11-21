@@ -1,5 +1,7 @@
-ID_DATA_KATEGORI_WARNA
+ID:Nama:KategoriID:WarnaID
 1:Chiki Pedas:3:2
 2:Sayuran:2:2
 3:Kentang:1:3
 4:Mie:3:2
+5:keju:1:4
+6:ikan:1:4

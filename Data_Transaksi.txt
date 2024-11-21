@@ -1,2 +1,2 @@
 Timestamp:FoodName:Quantity:Category:Color
-2024-11-20:Chiki Pedas:1:Snack:Hijau
+2024-11-21:Chiki Pedas:123:Snack:Hijau
