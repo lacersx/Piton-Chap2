@@ -656,7 +656,7 @@ class FoodApp:
         selected_food = next((food for food in self.foods if food['name'] == food_name), None)
         if selected_food:
             selected_date = self.calendar.get_date()
-            timestamp = f"{selected_date} {datetime.now().strftime('%H:%M:%S')}"
+            timestamp = f"{selected_date}"
             category_name = self.categories.get(selected_food['category_id'], 'Unknown')
             color_name = self.colors.get(selected_food['color_id'], 'Unknown')
 
@@ -671,7 +671,7 @@ class FoodApp:
             self.transaction_history.append(transaction)
 
             # Save transaction to file
-            if self.simpan_file_transaksi("Data_Transaksi.txt", self.transaction_history):
+            if Baca.simpan_file_transaksi(self,lokasi_file="Data_Transaksi.txt", transactions=self.transaction_history):
                 self.update_transaction_list()
                 self.quantity_entry.delete(0, tk.END)
                 messagebox.showinfo("Success", "Transaksi berhasil ditambahkan")
@@ -711,7 +711,7 @@ class FoodApp:
 
     def update_transaction_list(self):
         # Clear existing items
-        for item in self.transaction_tree.get_children():
+        '''for item in baca.transaction_tree.get_children():
             self.transaction_tree.delete(item)
 
         # Populate treeview
@@ -723,7 +723,7 @@ class FoodApp:
                 transaction['category'], 
                 transaction['color']
             ))
-
+'''
     def sort_column(self, col, reverse):
         # Get the data to sort
         data = [(self.transaction_tree.set(child, col), child) for child in self.transaction_tree.get_children('')]
