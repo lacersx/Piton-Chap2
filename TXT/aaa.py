@@ -75,30 +75,30 @@ class Baca:
             return []
 
     def baca_file_transaksi(lokasi_file):
-            try:
-                with open(lokasi_file, 'r') as file:
-                    lines = file.read().strip().splitlines()
-                    transaction_data = []
-                
-                    for line in lines[1:]:  # Skip header line
-                        if ':' in line and line.strip():
-                            try:
-                                # Split line into components
-                                parts = line.split(':')
-                                if len(parts) >= 5:
-                                    transaction_data.append({
-                                        'timestamp': parts[0].strip(),
-                                        'food_name': parts[1].strip(),
-                                        'quantity': int(parts[2].strip()),
-                                        'category': parts[3].strip(),
-                                        'color': parts[4].strip()
-                                    })
-                            except (ValueError, IndexError) as e:
-                                print(f"Error processing transaction line '{line}': {e}")
-                    return transaction_data
-            except FileNotFoundError:
-                print(f"File {lokasi_file} tidak ditemukan.")
-                return []
+        try:
+            with open(lokasi_file, 'r') as file:
+                lines = file.read().strip().splitlines()
+                transaction_data = []
+        
+                for line in lines[1:]:  # Skip header line
+                    if ':' in line and line.strip():
+                        try:
+                            # Split line into components
+                            parts = line.split(':')
+                            if len(parts) >= 5:
+                                transaction_data.append({
+                                    'timestamp': parts[0].strip(),
+                                    'food_name': parts[1].strip(),
+                                    'quantity': int(parts[2].strip()),
+                                    'category': parts[3].strip(),
+                                    'color': parts[4].strip()
+                                })
+                        except (ValueError, IndexError) as e:
+                            print(f"Error processing transaction line '{line}': {e}")
+                return transaction_data
+        except FileNotFoundError:
+            print(f"File {lokasi_file} tidak ditemukan.")
+            return []
 
     @staticmethod
     def simpan_file_kategori(lokasi_file, categories):
@@ -136,7 +136,7 @@ class Baca:
             print(f"Error saving food file: {e}")
             return False
 
-    def simpan_file_transaksi(lokasi_file, transactions):
+    def simpan_file_transaksi(self, lokasi_file, transactions):
         try:
             with open(lokasi_file, 'w') as file:
                 file.write("Timestamp:FoodName:Quantity:Category:Color\n")  # Header
@@ -633,7 +633,6 @@ class FoodApp:
             self.transaction_food_menu.set(food_names[0])
 
     def add_transaction(self):
-        pass
         food_name = self.transaction_food_var.get()
         quantity = self.quantity_entry.get().strip()
 
@@ -652,12 +651,13 @@ class FoodApp:
         # Find the selected food in the foods list
         selected_food = next((food for food in self.foods if food['name'] == food_name), None)
         if selected_food:
-            selected_date = self.calendar.get_date()  # Mengambil tanggal dari kalender
+            selected_date = self.calendar.get_date()
+            timestamp = f"{selected_date} {datetime.now().strftime('%H:%M:%S')}"
             category_name = self.categories.get(selected_food['category_id'], 'Unknown')
             color_name = self.colors.get(selected_food['color_id'], 'Unknown')
 
             transaction = {
-                'date': selected_date,
+                'timestamp': timestamp,
                 'food_name': food_name,
                 'quantity': quantity,
                 'category': category_name,
@@ -666,10 +666,9 @@ class FoodApp:
 
             self.transaction_history.append(transaction)
 
-            # Simpan transaksi ke file
-            if Baca.simpan_file_transaksi("Data_Transaksi.txt", self.transaction_history):
+            # Save transaction to file
+            if self.simpan_file_transaksi("Data_Transaksi.txt", self.transaction_history):
                 self.update_transaction_list()
-                self.update_delete_transaction_list()
                 self.quantity_entry.delete(0, tk.END)
                 messagebox.showinfo("Success", "Transaksi berhasil ditambahkan")
             else:
@@ -678,30 +677,29 @@ class FoodApp:
             messagebox.showerror("Error", "Makanan tidak ditemukan")
 
     def delete_transaction(self):
-        selected = self.delete_transaction_listbox.curselection()
-        if not selected:
+        selected_item = self.transaction_tree.selection()
+        if not selected_item:
             messagebox.showwarning("Error", "Pilih transaksi yang akan dihapus")
             return
 
-        index = selected[0]
-        if 0 <= index < len(self.transaction_history):
-            self.transaction_history.pop(index)
-            
-            # Save changes to file
-            if Baca.simpan_file_transaksi("Data_Transaksi.txt", self.transaction_history):
-                self.update_transaction_list()
-                self.update_delete_transaction_list()
-                messagebox.showinfo("Success", "Transaksi berhasil dihapus")
-            else:
-                messagebox.showerror("Error", "Gagal menyimpan perubahan transaksi")
+        # Get the index of the selected transaction
+        selected_index = self.transaction_tree.get_children().index(selected_item[0])
+
+        # Remove the transaction
+        self.transaction_history.pop(selected_index)
+
+        # Save changes to file
+        if self.simpan_file_transaksi("Data_Transaksi.txt", self.transaction_history):
+            self.update_transaction_list()
+            messagebox.showinfo("Success", "Transaksi berhasil dihapus")
         else:
-            messagebox.showerror("Error", "Indeks transaksi tidak valid")
+            messagebox.showerror("Error", "Gagal menyimpan perubahan transaksi")
 
     def update_transaction_list(self):
         # Clear existing items
         for item in self.transaction_tree.get_children():
             self.transaction_tree.delete(item)
-    
+
         # Populate treeview
         for transaction in self.transaction_history:
             self.transaction_tree.insert('', 'end', values=(
@@ -728,11 +726,11 @@ class FoodApp:
 
     def filter_transactions(self):
         filter_text = self.filter_entry.get().lower().strip()
-    
+
         # Clear existing items
         for item in self.transaction_tree.get_children():
             self.transaction_tree.delete(item)
-    
+
         # Filter and repopulate
         for transaction in self.transaction_history:
             # Check if filter text is in any of the transaction details
@@ -764,7 +762,6 @@ class FoodApp:
                     f"{transaction['timestamp']} - {transaction['food_name']} "
                     f"({transaction['quantity']}) - {transaction['category']} - {transaction['color']}")
 
-
     def update_listbox(self):
         self.food_listbox.delete(0, tk.END)
         for food in self.foods:
@@ -795,29 +792,31 @@ class FoodApp:
                 messagebox.showwarning("Error", "Pilih kategori yang valid")
                 return
             
-            new_id = max([food['id'] for food in self.foods], default=0) + 1
-            
-            new_food = {
-                "id": new_id,
-                "name": name,
-                "category_id": category_id,
-                "color_id": color_id
-            }
-            
-            self.foods.append(new_food)
-            
-            # Save to file
+            if self.foodid is not None:
+                # Update existing food
+                food = next((f for f in self.foods if f['id'] == self.foodid), None)
+                if food:
+                    food.update({"name": name, "color_id": color_id, "category_id": category_id})
+            else:
+            # Add new food
+                new_id = max([food['id'] for food in self.foods], default=0) + 1
+                self.foods.append({"id": new_id, "name": name, "color_id": color_id, "category_id": category_id})
+
             if Baca.simpan_file_makanan("Data_Makanan.txt", self.foods):
                 self.update_listbox()
                 self.food_name_entry.delete(0, tk.END)
+                self.food_id = None  # Reset after saving
                 messagebox.showinfo("Success", "Data makanan berhasil disimpan")
             else:
                 messagebox.showerror("Error", "Gagal menyimpan data makanan")
+
         else:
             messagebox.showwarning("Error", "Semua field harus diisi!")
 
     def add_food(self):
         self.food_name_entry.delete(0, tk.END)
+        self.foodid = None  # Reset food_id for new entry
+
         if self.colors:
             self.food_color_var.set(list(self.colors.values())[0])
         if self.categories:
@@ -829,6 +828,7 @@ class FoodApp:
             index = selected[0]
             if 0 <= index < len(self.foods):
                 food = self.foods[index]
+                self.foodid = food['id']
                 
                 self.food_name_entry.delete(0, tk.END)
                 self.food_name_entry.insert(0, food['name'])
@@ -839,7 +839,7 @@ class FoodApp:
                     self.food_category_var.set(self.categories[food['category_id']])
                 
                 # Remove the old entry
-                self.foods.pop(index)
+                #self.foods.pop(index)
                 self.update_listbox()
             else:
                 messagebox.showwarning("Error", "Invalid selection index")
@@ -859,7 +859,7 @@ class FoodApp:
                     self.update_listbox()
                     
                     # Record transaction
-                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    timestamp = datetime.now().strftime("%Y-%m-%d")
                     category_name = self.categories.get(food['category_id'], 'Unknown')
                     color_name = self.colors.get(food['color_id'], 'Unknown')
                     
