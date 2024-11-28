@@ -4,4 +4,4 @@ ID:Nama:KategoriID:WarnaID
 3:Kentang:1:3
 4:Mie:3:2
 5:keju:1:4
-6:ikan:1:4
+6:ikan:1:2

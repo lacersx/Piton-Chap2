@@ -138,9 +138,12 @@ class Baca:
 
     def simpan_file_transaksi(self, lokasi_file, transactions):
         try:
+            # Ensure transactions are sorted by timestamp
+            sorted_transactions = sorted(transactions, key=lambda x: x['timestamp'], reverse=True)
+            
             with open(lokasi_file, 'w') as file:
                 file.write("Timestamp:FoodName:Quantity:Category:Color\n")  # Header
-                for transaction in transactions:
+                for transaction in sorted_transactions:
                     file.write(f"{transaction['timestamp']}:{transaction['food_name']}:"
                              f"{transaction['quantity']}:{transaction['category']}:"
                              f"{transaction['color']}\n")
@@ -148,6 +151,7 @@ class Baca:
         except Exception as e:
             print(f"Error saving transaction file: {e}")
             return False
+
 
 class FoodApp:
     def __init__(self, root):
@@ -683,10 +687,20 @@ class FoodApp:
             return
 
         # Get the index of the selected transaction
-        selected_index = self.transaction_tree.get_children().index(selected_item[0])
+        selected_values = self.transaction_tree.item(selected_item[0])['values']
+        selected_transaction = {
+            'timestamp': selected_values[0],
+            'food_name': selected_values[1],
+            'quantity': selected_values[2],
+            'category': selected_values[3],
+            'color': selected_values[4]
+        }
 
         # Remove the transaction
-        self.transaction_history.pop(selected_index)
+        self.transaction_history = [t for t in self.transaction_history 
+                                    if not (t['timestamp'] == selected_transaction['timestamp'] and 
+                                            t['food_name'] == selected_transaction['food_name'] and 
+                                            t['quantity'] == selected_transaction['quantity'])]
 
         # Save changes to file
         if self.simpan_file_transaksi("Data_Transaksi.txt", self.transaction_history):
@@ -732,20 +746,25 @@ class FoodApp:
             self.transaction_tree.delete(item)
 
         # Filter and repopulate
-        for transaction in self.transaction_history:
-            # Check if filter text is in any of the transaction details
+        filtered_transactions = [
+            transaction for transaction in self.transaction_history
             if (filter_text in transaction['timestamp'].lower() or 
                 filter_text in transaction['food_name'].lower() or 
                 filter_text in str(transaction['quantity']).lower() or 
                 filter_text in transaction['category'].lower() or 
-                filter_text in transaction['color'].lower()):
-                self.transaction_tree.insert('', 'end', values=(
-                    transaction['timestamp'], 
-                    transaction['food_name'], 
-                    transaction['quantity'], 
-                    transaction['category'], 
-                    transaction['color']
-                ))
+                filter_text in transaction['color'].lower())
+        ]
+
+        # Populate filtered transactions
+        for transaction in filtered_transactions:
+            self.transaction_tree.insert('', 'end', values=(
+                transaction['timestamp'], 
+                transaction['food_name'], 
+                transaction['quantity'], 
+                transaction['category'], 
+                transaction['color']
+            ))
+
 
     def reset_transaction_filter(self):
         # Clear filter entry

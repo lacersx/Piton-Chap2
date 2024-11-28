@@ -192,7 +192,7 @@ class FoodApp:
 
         self.transaction_history = Baca.baca_file_transaksi("Data_Transaksi.txt")
         if not self.transaction_history:
-            messagebox.showwarning("Warning", "File makanan tidak ditemukan atau kosong.")
+            messagebox.showwarning("Warning", "File transaksi tidak ditemukan atau kosong.")
 
 
     def setup_ui(self):
