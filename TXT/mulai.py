@@ -169,6 +169,7 @@ class FoodApp:
         self.category_window = None
         self.add_category_listbox = None
         self.delete_category_listbox = None
+        self.delete_transaction_listbox = None
         
         # Load data from files
         self.load_data()
@@ -671,7 +672,7 @@ class FoodApp:
             self.transaction_history.append(transaction)
 
             # Save transaction to file
-            if Baca.simpan_file_transaksi(self,lokasi_file="Data_Transaksi.txt", transactions=self.transaction_history):
+            if Baca.simpan_file_transaksi(lokasi_file="Data_Transaksi.txt", transactions=self.transaction_history):
                 self.update_transaction_list()
                 self.quantity_entry.delete(0, tk.END)
                 messagebox.showinfo("Success", "Transaksi berhasil ditambahkan")
@@ -710,6 +711,7 @@ class FoodApp:
             messagebox.showerror("Error", "Gagal menyimpan perubahan transaksi")
 
     def update_transaction_list(self):
+        self.filter_transactions()
         # Clear existing items
         '''for item in baca.transaction_tree.get_children():
             self.transaction_tree.delete(item)

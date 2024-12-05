@@ -669,12 +669,12 @@ class FoodApp:
             messagebox.showerror("Error", "Makanan tidak ditemukan")
             
     def delete_transaction(self):
-        selected = self.delete_transaction_listbox.curselection()
-        if not selected:
+        selected_item = self.delete_transaction_listbox.selection()
+        if not selected_item:
             messagebox.showwarning("Error", "Pilih transaksi yang akan dihapus")
             return
 
-        index = selected[0]
+        index = selected_item[0]
         if 0 <= index < len(self.transaction_history):
             self.transaction_history.pop(index)
         
