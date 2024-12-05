@@ -136,7 +136,7 @@ class Baca:
             print(f"Error saving food file: {e}")
             return False
 
-    def simpan_file_transaksi(self, lokasi_file, transactions):
+    def simpan_file_transaksi(lokasi_file, transactions):
         try:
             # Ensure transactions are sorted by timestamp
             sorted_transactions = sorted(transactions, key=lambda x: x['timestamp'], reverse=True)
@@ -578,11 +578,11 @@ class FoodApp:
         tk.Button(add_frame, text="Tambah Transaksi", 
                  command=self.add_transaction).pack(pady=10)
 
-        # Transaction list
+        '''# Transaction list
         tk.Label(add_frame, text="Daftar Transaksi:", font=("Arial", 10, "bold")).pack(pady=5)
         self.transaction_listbox = tk.Listbox(add_frame, width=50, height=10)
         self.transaction_listbox.pack(pady=5, padx=10)
-        self.update_transaction_list()
+        self.update_transaction_list()'''
 
         # Setup Transaction History Tab
         tk.Label(history_frame, text="Riwayat Transaksi", font=("Arial", 12, "bold")).pack(pady=10)
@@ -703,7 +703,7 @@ class FoodApp:
                                             t['quantity'] == selected_transaction['quantity'])]
 
         # Save changes to file
-        if self.simpan_file_transaksi("Data_Transaksi.txt", self.transaction_history):
+        if Baca.simpan_file_transaksi(lokasi_file="Data_Transaksi.txt", transactions=self.transaction_history):
             self.update_transaction_list()
             messagebox.showinfo("Success", "Transaksi berhasil dihapus")
         else:

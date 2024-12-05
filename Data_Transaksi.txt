@@ -1,6 +1,4 @@
 Timestamp:FoodName:Quantity:Category:Color
+2025-01-09:Kentang:123:Protein:Merah
 2024-11-28:Chiki Pedas:123:Snack:Hijau
-2024-11-28:Chiki Pedas:222:Snack:Hijau
-2024-11-13 11:22:46:Chiki Pedas:2
 2024-11-07:keju:1:Protein:biru
-2024-11-06:Kentang:123:Protein:Merah
