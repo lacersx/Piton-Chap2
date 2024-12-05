@@ -742,21 +742,24 @@ class FoodApp:
 
     def filter_transactions(self):
         filter_text = self.filter_entry.get().lower().strip()
-
+ 
         # Clear existing items
         for item in self.transaction_tree.get_children():
             self.transaction_tree.delete(item)
-
+ 
         # Filter and repopulate
         filtered_transactions = [
             transaction for transaction in self.transaction_history
-            if (filter_text in transaction['timestamp'].lower() or 
-                filter_text in transaction['food_name'].lower() or 
-                filter_text in str(transaction['quantity']).lower() or 
+            if (filter_text in transaction['food_name'].lower() or 
                 filter_text in transaction['category'].lower() or 
                 filter_text in transaction['color'].lower())
         ]
-
+        #print (filtered_transactions)
+        jumlah_transaksi =0
+        for ft in filtered_transactions:
+           jumlah_transaksi += int(ft['quantity'])
+ 
+        print("jumlah total transaksi = " + str(jumlah_transaksi))
         # Populate filtered transactions
         for transaction in filtered_transactions:
             self.transaction_tree.insert('', 'end', values=(
