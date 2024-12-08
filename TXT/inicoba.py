@@ -279,7 +279,7 @@ class FoodApp:
         tk.Button(self.food_list_frame, text="Menu Kategori", command=self.show_category_menu).pack(pady=5)
         tk.Button(self.food_list_frame, text="Menu Warna", command=self.show_color_frame).pack(pady=5)
         tk.Button(self.food_list_frame, text="Menu Transaksi", command=self.show_transaction_menu).pack(pady=5)
-
+        tk.Button(self.food_list_frame, text= "Menu Detail", command=self.show_view_food_detail). pack(pady=5)
         # Add Food Frame
         self.add_food_frame = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
         self.add_food_frame.place(x=350, y=20, width=400, height=250)
