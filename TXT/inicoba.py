@@ -178,16 +178,16 @@ class FoodApp:
         self.setup_ui()
         self.update_listbox()
 
-    def view_food_details(self):
-        selected = self.food_listbox.curselection()
-        if not selected:
-            messagebox.showwarning("Peringatan", "Pilih makanan untuk melihat detail")
-            return
+def view_food_details(self):
+    selected = self.food_listbox.curselection()
+    if not selected:
+        messagebox.showwarning("Peringatan", "Pilih makanan untuk melihat detail")
+        return
 
-        index = selected[0]
-        if 0 <= index < len(self.foods):
-            food = self.foods[index]
-        
+    index = selected[0]
+    if 0 <= index < len(self.foods):
+        food = self.foods[index]
+    
         # Buat window detail
         details_window = tk.Toplevel(self.root)
         details_window.title("Detail Makanan")
@@ -219,6 +219,27 @@ class FoodApp:
         total_transactions = sum(int(transaction['quantity']) for transaction in food_transactions)
         tk.Label(details_frame, text=f"Total Transaksi: {total_transactions}", font=("Arial", 12)).pack(anchor='w')
 
+        # Tabel riwayat transaksi untuk makanan ini
+        tk.Label(details_frame, text="Riwayat Transaksi Makanan", font=("Arial", 12, "bold")).pack(pady=5)
+
+        # Treeview untuk riwayat transaksi
+        transaction_tree = ttk.Treeview(details_frame, columns=("Tanggal", "Jumlah"), show='headings')
+        transaction_tree.heading("Tanggal", text="Tanggal")
+        transaction_tree.heading("Jumlah", text="Jumlah")
+        transaction_tree.column("Tanggal", width=200, anchor='center')
+        transaction_tree.column("Jumlah", width=100, anchor='center')
+        transaction_tree.pack(fill='both', expand=True)
+
+        # Masukkan transaksi untuk makanan ini
+        for transaction in food_transactions:
+            transaction_tree.insert('', 'end', values=(
+                transaction['timestamp'], 
+                transaction['quantity']
+            ))
+
+    # Tombol tutup
+    tk.Button(main_frame, text="Tutup", command=detail_window.destroy).pack(pady=10)
+        
         # Tombol tutup
         tk.Button(details_frame, text="Tutup", command=details_window.destroy).pack(pady=10)
 
@@ -279,7 +300,7 @@ class FoodApp:
         tk.Button(self.food_list_frame, text="Menu Kategori", command=self.show_category_menu).pack(pady=5)
         tk.Button(self.food_list_frame, text="Menu Warna", command=self.show_color_frame).pack(pady=5)
         tk.Button(self.food_list_frame, text="Menu Transaksi", command=self.show_transaction_menu).pack(pady=5)
-        tk.Button(self.food_list_frame, text= "Menu Detail", command=self.show_view_food_detail). pack(pady=5)
+        tk.Button(self.food_list_frame, text= "lihat detail", command=self.show_view_food_detail). pack(pady=5)
         # Add Food Frame
         self.add_food_frame = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
         self.add_food_frame.place(x=350, y=20, width=400, height=250)
