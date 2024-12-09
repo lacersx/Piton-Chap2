@@ -863,7 +863,34 @@ class FoodApp:
             self.food_listbox.insert(tk.END, f"{food['name']} - {category_name} - {color_name}")
 
     def show_view_food_detail(self):
-        print ("mantab")
+        # Dapatkan item yang dipilih
+        selected = self.food_listbox.curselection()
+        if not selected:
+            messagebox.showwarning("Warning", "Pilih makanan untuk melihat detailnya!")
+            return
+        
+        index = selected[0]
+        food = self.foods[index]
+
+        # Ambil informasi kategori dan warna
+        category_name = self.categories.get(food['category_id'], 'Unknown')
+        color_name = self.colors.get(food['color_id'], 'Unknown')
+
+        # Buat window baru
+        detail_window = tk.Toplevel(self.root)
+        detail_window.title(f"Detail Makanan: {food['name']}")
+        detail_window.geometry("400x300")
+
+        # Tampilkan informasi di window baru
+        tk.Label(detail_window, text="Detail Data Makanan", font=("Arial", 14, "bold")).pack(pady=10)
+
+        tk.Label(detail_window, text=f"ID: {food['id']}", font=("Arial", 12)).pack(pady=5)
+        tk.Label(detail_window, text=f"Nama: {food['name']}", font=("Arial", 12)).pack(pady=5)
+        tk.Label(detail_window, text=f"Kategori: {category_name}", font=("Arial", 12)).pack(pady=5)
+        tk.Label(detail_window, text=f"Warna: {color_name}", font=("Arial", 12)).pack(pady=5)
+
+        # Tombol tutup
+        tk.Button(detail_window, text="Tutup", command=detail_window.destroy).pack(pady=20)
 
     def get_id_by_value(self, dictionary, value):
         for key, val in dictionary.items():
