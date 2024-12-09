@@ -979,6 +979,9 @@ class FoodApp:
         else:
             messagebox.showwarning("Selection Error", "Pilih makanan untuk dihapus")
 
+    def show_view_food_detail():
+        print ("mantab")
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = FoodApp(root)

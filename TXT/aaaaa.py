@@ -217,6 +217,7 @@ class FoodApp:
         tk.Button(self.food_list_frame, text="Menu Kategori", command=self.show_category_menu).pack(pady=5)
         tk.Button(self.food_list_frame, text="Menu Warna", command=self.show_color_frame).pack(pady=5)
         tk.Button(self.food_list_frame, text="Menu Transaksi", command=self.show_transaction_menu).pack(pady=5)
+        tk.Button(self.food_list_frame, text= "lihat detail", command=self.show_view_food_detail). pack(pady=5) 
 
         # Add Food Frame
         self.add_food_frame = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
@@ -746,6 +747,7 @@ class FoodApp:
                 transaction['color']
             ))
 '''
+
     def sort_column(self, col, reverse):
         # Get the data to sort
         data = [(self.transaction_tree.set(child, col), child) for child in self.transaction_tree.get_children('')]
@@ -859,6 +861,9 @@ class FoodApp:
             category_name = self.categories.get(food['category_id'], 'Unknown')
             color_name = self.colors.get(food['color_id'], 'Unknown')
             self.food_listbox.insert(tk.END, f"{food['name']} - {category_name} - {color_name}")
+
+    def show_view_food_detail(self):
+        print ("mantab")
 
     def get_id_by_value(self, dictionary, value):
         for key, val in dictionary.items():
