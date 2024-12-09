@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 from datetime import datetime
-from tkcalendar import Calendar
+from tkcalendar import Calendar, DateEntry
 
 class Baca:
     @staticmethod
@@ -178,87 +178,6 @@ class FoodApp:
         self.setup_ui()
         self.update_listbox()
 
-    def view_food_details(self):
-        selected = self.food_listbox.curselection()
-        if not selected:
-            messagebox.showwarning("Peringatan", "Pilih makanan untuk melihat detail")
-            return
-
-        index = selected[0]
-        if 0 <= index < len(self.foods):
-            food = self.foods[index]
-    
-        # Buat window detail
-        details_window = tk.Toplevel(self.root)
-        details_window.title("Detail Makanan")
-        details_window.geometry("500x500")
-
-        # Frame untuk menampilkan detail
-        details_frame = tk.Frame(details_window)
-        details_frame.pack(padx=20, pady=20, fill='both', expand=True)
-
-        # Label-label detail
-        tk.Label(details_frame, text="Detail Makanan", font=("Arial", 14, "bold")).pack(pady=10)
-
-        tk.Label(details_frame, text=f"ID Makanan: {food['id']}", font=("Arial", 12)).pack(anchor='w')
-        tk.Label(details_frame, text=f"Nama Makanan: {food['name']}", font=("Arial", 12)).pack(anchor='w')
-        
-        # Dapatkan nama kategori berdasarkan ID
-        category_name = self.categories.get(food['category_id'], 'Tidak Diketahui')
-        tk.Label(details_frame, text=f"Kategori: {category_name}", font=("Arial", 12)).pack(anchor='w')
-
-        # Dapatkan nama warna berdasarkan ID
-        color_name = self.colors.get(food['color_id'], 'Tidak Diketahui')
-        tk.Label(details_frame, text=f"Warna: {color_name}", font=("Arial", 12)).pack(anchor='w')
-
-        # Cari total transaksi untuk makanan ini
-        food_transactions = [
-            transaction for transaction in self.transaction_history 
-            if transaction['food_name'] == food['name']
-        ]
-        total_transactions = sum(int(transaction['quantity']) for transaction in food_transactions)
-        tk.Label(details_frame, text=f"Total Transaksi: {total_transactions}", font=("Arial", 12)).pack(anchor='w')
-
-        # Tabel riwayat transaksi untuk makanan ini
-        tk.Label(details_frame, text="Riwayat Transaksi Makanan", font=("Arial", 12, "bold")).pack(pady=5)
-
-        # Treeview untuk riwayat transaksi
-        transaction_tree = ttk.Treeview(details_frame, columns=("Tanggal", "Jumlah"), show='headings')
-        transaction_tree.heading("Tanggal", text="Tanggal")
-        transaction_tree.heading("Jumlah", text="Jumlah")
-        transaction_tree.column("Tanggal", width=200, anchor='center')
-        transaction_tree.column("Jumlah", width=100, anchor='center')
-        transaction_tree.pack(fill='both', expand=True)
-
-        # Masukkan transaksi untuk makanan ini
-        for transaction in food_transactions:
-            transaction_tree.insert('', 'end', values=(
-                transaction['timestamp'], 
-                transaction['quantity']
-            ))
-
-           
-        # Tombol tutup
-        tk.Button(details_frame, text="Tutup", command=details_window.destroy).pack(pady=10)
-
-        # Tabel riwayat transaksi untuk makanan ini
-        tk.Label(details_frame, text="Riwayat Transaksi Makanan", font=("Arial", 12, "bold")).pack(pady=5)
-
-        # Treeview untuk riwayat transaksi
-        transaction_tree = ttk.Treeview(details_frame, columns=("Tanggal", "Jumlah"), show='headings')
-        transaction_tree.heading("Tanggal", text="Tanggal")
-        transaction_tree.heading("Jumlah", text="Jumlah")
-        transaction_tree.column("Tanggal", width=200, anchor='center')
-        transaction_tree.column("Jumlah", width=100, anchor='center')
-        transaction_tree.pack(fill='both', expand=True)
-
-        # Masukkan transaksi untuk makanan ini
-        for transaction in food_transactions:
-            transaction_tree.insert('', 'end', values=(
-                transaction['timestamp'], 
-                transaction['quantity']
-            ))
-
     def load_data(self):
         # Load categories
         self.categories = Baca.baca_file_kategori("Data_Kategori.txt")
@@ -298,7 +217,7 @@ class FoodApp:
         tk.Button(self.food_list_frame, text="Menu Kategori", command=self.show_category_menu).pack(pady=5)
         tk.Button(self.food_list_frame, text="Menu Warna", command=self.show_color_frame).pack(pady=5)
         tk.Button(self.food_list_frame, text="Menu Transaksi", command=self.show_transaction_menu).pack(pady=5)
-        tk.Button(self.food_list_frame, text= "lihat detail", command=self.show_view_food_detail). pack(pady=5)
+
         # Add Food Frame
         self.add_food_frame = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
         self.add_food_frame.place(x=350, y=20, width=400, height=250)
@@ -681,6 +600,17 @@ class FoodApp:
         tk.Button(filter_frame, text="Cari", command=self.filter_transactions).pack(side=tk.LEFT, padx=5)
         tk.Button(filter_frame, text="Reset", command=self.reset_transaction_filter).pack(side=tk.LEFT, padx=5)
 
+        # Date range filter with DateEntry
+        tk.Label(filter_frame, text="Tanggal Mulai:").pack(side=tk.LEFT, padx=5)
+        self.start_date_entry = DateEntry(filter_frame, width=12, background='darkblue', foreground='white', borderwidth=2, date_pattern='yyyy-MM-dd')
+        self.start_date_entry.pack(side=tk.LEFT, padx=5)
+
+        tk.Label(filter_frame, text="Tanggal Akhir:").pack(side=tk.LEFT, padx=5)
+        self.end_date_entry = DateEntry(filter_frame, width=12, background='darkblue', foreground='white', borderwidth=2, date_pattern='yyyy-MM-dd')
+        self.end_date_entry.pack(side=tk.LEFT, padx=5)
+
+        tk.Button(filter_frame, text="Filter Tanggal", command=self.apply_date_filter).pack(side=tk.LEFT, padx=5)
+                
         # Treeview for transactions
         self.transaction_tree = ttk.Treeview(history_frame, columns=("Tanggal", "Makanan", "Jumlah", "Kategori", "Warna"), show='headings')
 
@@ -708,6 +638,11 @@ class FoodApp:
         # Delete transaction button
         tk.Button(history_frame, text="Hapus Transaksi Terpilih", 
                  command=self.delete_transaction).pack(pady=10)
+        
+        # Label untuk jumlah total transaksi
+        self.total_quantity_var = tk.StringVar(value="Total Quantity: 0")
+        self.total_quantity_label = tk.Label(history_frame, textvariable=self.total_quantity_var, font=("Arial", 10, "bold"))
+        self.total_quantity_label.pack(pady=10)
 
         # Populate treeview
         self.update_transaction_list()
@@ -793,6 +728,10 @@ class FoodApp:
 
     def update_transaction_list(self):
         self.filter_transactions()
+        self.filter_transactions_by_date(
+            datetime.min.date(),  # Semua data tanpa batas awal
+            datetime.max.date()   # Semua data tanpa batas akhir
+        )
         # Clear existing items
         '''for item in baca.transaction_tree.get_children():
             self.transaction_tree.delete(item)
@@ -835,12 +774,14 @@ class FoodApp:
                 filter_text in transaction['category'].lower() or 
                 filter_text in transaction['color'].lower())
         ]
+
         #print (filtered_transactions)
         jumlah_transaksi =0
         for ft in filtered_transactions:
            jumlah_transaksi += int(ft['quantity'])
  
         print("jumlah total transaksi = " + str(jumlah_transaksi))
+        
         # Populate filtered transactions
         for transaction in filtered_transactions:
             self.transaction_tree.insert('', 'end', values=(
@@ -850,6 +791,52 @@ class FoodApp:
                 transaction['category'], 
                 transaction['color']
             ))
+
+    def filter_transactions_by_date(self, start_date, end_date):
+        """Filter transactions within a specific date range."""
+        # Clear existing items in the treeview
+        for item in self.transaction_tree.get_children():
+            self.transaction_tree.delete(item)
+
+        # Filter transactions based on date range
+        filtered_transactions = [
+            transaction for transaction in self.transaction_history
+            if start_date <= datetime.strptime(transaction['timestamp'], "%Y-%m-%d").date() <= end_date
+        ]
+
+        # Hitung jumlah total transaksi
+        jumlah_transaksi = 0
+        for ft in filtered_transactions:
+            jumlah_transaksi += int(ft['quantity'])
+
+        # Perbarui label total quantity
+        self.total_quantity_var.set(f"Total Quantity: {jumlah_transaksi}")
+        print(f"Jumlah total transaksi = {jumlah_transaksi}")
+
+        # Populate the treeview with filtered transactions
+        for transaction in filtered_transactions:
+            self.transaction_tree.insert('', 'end', values=(
+                transaction['timestamp'],
+                transaction['food_name'],
+                transaction['quantity'],
+                transaction['category'],
+                transaction['color']
+            ))
+
+    def apply_date_filter(self):
+        """Filter transactions based on a date range."""
+        try:
+            # Ambil tanggal dari DateEntry
+            start_date = datetime.strptime(self.start_date_entry.get(), "%Y-%m-%d").date()
+            end_date = datetime.strptime(self.end_date_entry.get(), "%Y-%m-%d").date()
+
+            if start_date > end_date:
+                messagebox.showwarning("Error", "Tanggal mulai harus lebih awal dari tanggal akhir.")
+                return
+
+            self.filter_transactions_by_date(start_date, end_date)
+        except ValueError:
+            messagebox.showerror("Error", "Pilih tanggal dengan benar.")
 
     def reset_transaction_filter(self):
         # Clear filter entry
