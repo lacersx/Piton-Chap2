@@ -541,7 +541,7 @@ class FoodApp:
     def show_transaction_menu(self):
         self.transaction_window = tk.Toplevel(self.root)
         self.transaction_window.title("Menu Transaksi")
-        self.transaction_window.geometry("600x500")
+        self.transaction_window.geometry("900x450")
 
         # Create notebook for tabs
         notebook = ttk.Notebook(self.transaction_window)
@@ -775,12 +775,12 @@ class FoodApp:
                 filter_text in transaction['color'].lower())
         ]
 
-        #print (filtered_transactions)
+        '''#print (filtered_transactions)
         jumlah_transaksi =0
         for ft in filtered_transactions:
            jumlah_transaksi += int(ft['quantity'])
  
-        print("jumlah total transaksi = " + str(jumlah_transaksi))
+        print("jumlah total transaksi = " + str(jumlah_transaksi))'''
         
         # Populate filtered transactions
         for transaction in filtered_transactions:
@@ -811,7 +811,7 @@ class FoodApp:
 
         # Perbarui label total quantity
         self.total_quantity_var.set(f"Total Quantity: {jumlah_transaksi}")
-        print(f"Jumlah total transaksi = {jumlah_transaksi}")
+        #print(f"Jumlah total transaksi = {jumlah_transaksi}")
 
         # Populate the treeview with filtered transactions
         for transaction in filtered_transactions:
