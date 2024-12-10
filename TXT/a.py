@@ -1,6 +1,11 @@
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import messagebox, ttk, filedialog
 from datetime import datetime
+from tkcalendar import Calendar, DateEntry
+import os
+from PIL import Image, ImageTk
+import shutil
+import pathlib
 
 class Baca:
     @staticmethod
@@ -74,30 +79,30 @@ class Baca:
             return []
 
     def baca_file_transaksi(lokasi_file):
-            try:
-                with open(lokasi_file, 'r') as file:
-                    lines = file.read().strip().splitlines()
-                    transaction_data = []
-                
-                    for line in lines[1:]:  # Skip header line
-                        if ':' in line and line.strip():
-                            try:
-                                # Split line into components
-                                parts = line.split(':')
-                                if len(parts) >= 5:
-                                    transaction_data.append({
-                                        'timestamp': parts[0].strip(),
-                                        'food_name': parts[1].strip(),
-                                        'quantity': int(parts[2].strip()),
-                                        'category': parts[3].strip(),
-                                        'color': parts[4].strip()
-                                    })
-                            except (ValueError, IndexError) as e:
-                                print(f"Error processing transaction line '{line}': {e}")
-                    return transaction_data
-            except FileNotFoundError:
-                print(f"File {lokasi_file} tidak ditemukan.")
-                return []
+        try:
+            with open(lokasi_file, 'r') as file:
+                lines = file.read().strip().splitlines()
+                transaction_data = []
+        
+                for line in lines[1:]:  # Skip header line
+                    if ':' in line and line.strip():
+                        try:
+                            # Split line into components
+                            parts = line.split(':')
+                            if len(parts) >= 5:
+                                transaction_data.append({
+                                    'timestamp': parts[0].strip(),
+                                    'food_name': parts[1].strip(),
+                                    'quantity': int(parts[2].strip()),
+                                    'category': parts[3].strip(),
+                                    'color': parts[4].strip()
+                                })
+                        except (ValueError, IndexError) as e:
+                            print(f"Error processing transaction line '{line}': {e}")
+                return transaction_data
+        except FileNotFoundError:
+            print(f"File {lokasi_file} tidak ditemukan.")
+            return []
 
     @staticmethod
     def simpan_file_kategori(lokasi_file, categories):
@@ -137,9 +142,12 @@ class Baca:
 
     def simpan_file_transaksi(lokasi_file, transactions):
         try:
+            # Ensure transactions are sorted by timestamp
+            sorted_transactions = sorted(transactions, key=lambda x: x['timestamp'], reverse=True)
+            
             with open(lokasi_file, 'w') as file:
                 file.write("Timestamp:FoodName:Quantity:Category:Color\n")  # Header
-                for transaction in transactions:
+                for transaction in sorted_transactions:
                     file.write(f"{transaction['timestamp']}:{transaction['food_name']}:"
                              f"{transaction['quantity']}:{transaction['category']}:"
                              f"{transaction['color']}\n")
@@ -147,6 +155,7 @@ class Baca:
         except Exception as e:
             print(f"Error saving transaction file: {e}")
             return False
+
 
 class FoodApp:
     def __init__(self, root):
@@ -164,7 +173,7 @@ class FoodApp:
         self.category_window = None
         self.add_category_listbox = None
         self.delete_category_listbox = None
-        self.delete_transaction_listbox = None  # Listbox for deleting transactions
+        self.delete_transaction_listbox = None
         
         # Load data from files
         self.load_data()
@@ -212,6 +221,7 @@ class FoodApp:
         tk.Button(self.food_list_frame, text="Menu Kategori", command=self.show_category_menu).pack(pady=5)
         tk.Button(self.food_list_frame, text="Menu Warna", command=self.show_color_frame).pack(pady=5)
         tk.Button(self.food_list_frame, text="Menu Transaksi", command=self.show_transaction_menu).pack(pady=5)
+        tk.Button(self.food_list_frame, text= "lihat detail", command=self.show_view_food_detail). pack(pady=5) 
 
         # Add Food Frame
         self.add_food_frame = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
@@ -536,7 +546,7 @@ class FoodApp:
     def show_transaction_menu(self):
         self.transaction_window = tk.Toplevel(self.root)
         self.transaction_window.title("Menu Transaksi")
-        self.transaction_window.geometry("800x600")
+        self.transaction_window.geometry("900x450")
 
         # Create notebook for tabs
         notebook = ttk.Notebook(self.transaction_window)
@@ -552,7 +562,7 @@ class FoodApp:
 
         # Setup Add Transaction Tab
         tk.Label(add_frame, text="Tambah Transaksi Baru", font=("Arial", 12, "bold")).pack(pady=10)
-
+        
         # Food selection
         tk.Label(add_frame, text="Pilih Makanan:").pack(pady=5)
         self.transaction_food_var = tk.StringVar()
@@ -565,9 +575,20 @@ class FoodApp:
         self.quantity_entry = tk.Entry(add_frame)
         self.quantity_entry.pack(pady=5)
 
+        # Calendar input
+        tk.Label(add_frame, text="Pilih Tanggal Transaksi:").pack(pady=5)
+        self.calendar = Calendar(add_frame, selectmode='day', date_pattern='yyyy-mm-dd')
+        self.calendar.pack(pady=5)
+
         # Add transaction button
         tk.Button(add_frame, text="Tambah Transaksi", 
                  command=self.add_transaction).pack(pady=10)
+
+        '''# Transaction list
+        tk.Label(add_frame, text="Daftar Transaksi:", font=("Arial", 10, "bold")).pack(pady=5)
+        self.transaction_listbox = tk.Listbox(add_frame, width=50, height=10)
+        self.transaction_listbox.pack(pady=5, padx=10)
+        self.update_transaction_list()'''
 
         # Setup Transaction History Tab
         tk.Label(history_frame, text="Riwayat Transaksi", font=("Arial", 12, "bold")).pack(pady=10)
@@ -576,7 +597,7 @@ class FoodApp:
         filter_frame = ttk.Frame(history_frame)
         filter_frame.pack(pady=5, padx=10, fill='x')
 
-    # Filter inputs
+        # Filter inputs
         tk.Label(filter_frame, text="Filter:").pack(side=tk.LEFT, padx=5)
         self.filter_entry = tk.Entry(filter_frame, width=20)
         self.filter_entry.pack(side=tk.LEFT, padx=5)
@@ -584,6 +605,17 @@ class FoodApp:
         tk.Button(filter_frame, text="Cari", command=self.filter_transactions).pack(side=tk.LEFT, padx=5)
         tk.Button(filter_frame, text="Reset", command=self.reset_transaction_filter).pack(side=tk.LEFT, padx=5)
 
+        # Date range filter with DateEntry
+        tk.Label(filter_frame, text="Tanggal Mulai:").pack(side=tk.LEFT, padx=5)
+        self.start_date_entry = DateEntry(filter_frame, width=12, background='darkblue', foreground='white', borderwidth=2, date_pattern='yyyy-MM-dd')
+        self.start_date_entry.pack(side=tk.LEFT, padx=5)
+
+        tk.Label(filter_frame, text="Tanggal Akhir:").pack(side=tk.LEFT, padx=5)
+        self.end_date_entry = DateEntry(filter_frame, width=12, background='darkblue', foreground='white', borderwidth=2, date_pattern='yyyy-MM-dd')
+        self.end_date_entry.pack(side=tk.LEFT, padx=5)
+
+        tk.Button(filter_frame, text="Filter Tanggal", command=self.apply_date_filter).pack(side=tk.LEFT, padx=5)
+                
         # Treeview for transactions
         self.transaction_tree = ttk.Treeview(history_frame, columns=("Tanggal", "Makanan", "Jumlah", "Kategori", "Warna"), show='headings')
 
@@ -611,10 +643,14 @@ class FoodApp:
         # Delete transaction button
         tk.Button(history_frame, text="Hapus Transaksi Terpilih", 
                  command=self.delete_transaction).pack(pady=10)
+        
+        # Label untuk jumlah total transaksi
+        self.total_quantity_var = tk.StringVar(value="Total Quantity: 0")
+        self.total_quantity_label = tk.Label(history_frame, textvariable=self.total_quantity_var, font=("Arial", 10, "bold"))
+        self.total_quantity_label.pack(pady=10)
 
         # Populate treeview
         self.update_transaction_list()
-
 
     def update_food_menu(self):
         food_names = [food['name'] for food in self.foods]
@@ -641,10 +677,11 @@ class FoodApp:
         # Find the selected food in the foods list
         selected_food = next((food for food in self.foods if food['name'] == food_name), None)
         if selected_food:
-            timestamp = datetime.now().strftime("%Y-%m-%d")
+            selected_date = self.calendar.get_date()
+            timestamp = f"{selected_date}"
             category_name = self.categories.get(selected_food['category_id'], 'Unknown')
             color_name = self.colors.get(selected_food['color_id'], 'Unknown')
-            
+
             transaction = {
                 'timestamp': timestamp,
                 'food_name': food_name,
@@ -652,44 +689,58 @@ class FoodApp:
                 'category': category_name,
                 'color': color_name
             }
-            
+
             self.transaction_history.append(transaction)
-            
-            # Save transactions to file
-            if Baca.simpan_file_transaksi("Data_Transaksi.txt", self.transaction_history):
+
+            # Save transaction to file
+            if Baca.simpan_file_transaksi(lokasi_file="Data_Transaksi.txt", transactions=self.transaction_history):
                 self.update_transaction_list()
-                self.update_delete_transaction_list()
-                
-                # Clear inputs
                 self.quantity_entry.delete(0, tk.END)
                 messagebox.showinfo("Success", "Transaksi berhasil ditambahkan")
             else:
                 messagebox.showerror("Error", "Gagal menyimpan transaksi")
         else:
             messagebox.showerror("Error", "Makanan tidak ditemukan")
-            
+
     def delete_transaction(self):
-        selected_item = self.delete_transaction_listbox.selection()
+        selected_item = self.transaction_tree.selection()
         if not selected_item:
             messagebox.showwarning("Error", "Pilih transaksi yang akan dihapus")
             return
 
-        index = selected_item[0]
-        if 0 <= index < len(self.transaction_history):
-            self.transaction_history.pop(index)
-        
-            # Simpan perubahan ke file
-            if Baca.simpan_file_transaksi("Data_Transaksi.txt", self.transaction_history):
-                self.update_delete_transaction_list()
-                messagebox.showinfo("Success", "Transaksi berhasil dihapus")
-            else:
-                messagebox.showerror("Error", "Gagal menyimpan perubahan transaksi")
-    
+        # Get the index of the selected transaction
+        selected_values = self.transaction_tree.item(selected_item[0])['values']
+        selected_transaction = {
+            'timestamp': selected_values[0],
+            'food_name': selected_values[1],
+            'quantity': selected_values[2],
+            'category': selected_values[3],
+            'color': selected_values[4]
+        }
+
+        # Remove the transaction
+        self.transaction_history = [t for t in self.transaction_history 
+                                    if not (t['timestamp'] == selected_transaction['timestamp'] and 
+                                            t['food_name'] == selected_transaction['food_name'] and 
+                                            t['quantity'] == selected_transaction['quantity'])]
+
+        # Save changes to file
+        if Baca.simpan_file_transaksi(lokasi_file="Data_Transaksi.txt", transactions=self.transaction_history):
+            self.update_transaction_list()
+            messagebox.showinfo("Success", "Transaksi berhasil dihapus")
+        else:
+            messagebox.showerror("Error", "Gagal menyimpan perubahan transaksi")
+
     def update_transaction_list(self):
+        self.filter_transactions()
+        self.filter_transactions_by_date(
+            datetime.min.date(),  # Semua data tanpa batas awal
+            datetime.max.date()   # Semua data tanpa batas akhir
+        )
         # Clear existing items
-        for item in self.transaction_tree.get_children():
+        '''for item in baca.transaction_tree.get_children():
             self.transaction_tree.delete(item)
-    
+
         # Populate treeview
         for transaction in self.transaction_history:
             self.transaction_tree.insert('', 'end', values=(
@@ -699,6 +750,7 @@ class FoodApp:
                 transaction['category'], 
                 transaction['color']
             ))
+'''
 
     def sort_column(self, col, reverse):
         # Get the data to sort
@@ -716,26 +768,81 @@ class FoodApp:
 
     def filter_transactions(self):
         filter_text = self.filter_entry.get().lower().strip()
-    
+ 
         # Clear existing items
         for item in self.transaction_tree.get_children():
             self.transaction_tree.delete(item)
-    
+ 
         # Filter and repopulate
-        for transaction in self.transaction_history:
-            # Check if filter text is in any of the transaction details
-            if (filter_text in transaction['timestamp'].lower() or 
-                filter_text in transaction['food_name'].lower() or 
-                filter_text in str(transaction['quantity']).lower() or 
+        filtered_transactions = [
+            transaction for transaction in self.transaction_history
+            if (filter_text in transaction['food_name'].lower() or 
                 filter_text in transaction['category'].lower() or 
-                filter_text in transaction['color'].lower()):
-                self.transaction_tree.insert('', 'end', values=(
-                    transaction['timestamp'], 
-                    transaction['food_name'], 
-                    transaction['quantity'], 
-                    transaction['category'], 
-                    transaction['color']
-                ))
+                filter_text in transaction['color'].lower())
+        ]
+
+        '''#print (filtered_transactions)
+        jumlah_transaksi =0
+        for ft in filtered_transactions:
+           jumlah_transaksi += int(ft['quantity'])
+ 
+        print("jumlah total transaksi = " + str(jumlah_transaksi))'''
+        
+        # Populate filtered transactions
+        for transaction in filtered_transactions:
+            self.transaction_tree.insert('', 'end', values=(
+                transaction['timestamp'], 
+                transaction['food_name'], 
+                transaction['quantity'], 
+                transaction['category'], 
+                transaction['color']
+            ))
+
+    def filter_transactions_by_date(self, start_date, end_date):
+        """Filter transactions within a specific date range."""
+        # Clear existing items in the treeview
+        for item in self.transaction_tree.get_children():
+            self.transaction_tree.delete(item)
+
+        # Filter transactions based on date range
+        filtered_transactions = [
+            transaction for transaction in self.transaction_history
+            if start_date <= datetime.strptime(transaction['timestamp'], "%Y-%m-%d").date() <= end_date
+        ]
+
+        # Hitung jumlah total transaksi
+        jumlah_transaksi = 0
+        for ft in filtered_transactions:
+            jumlah_transaksi += int(ft['quantity'])
+
+        # Perbarui label total quantity
+        self.total_quantity_var.set(f"Total Quantity: {jumlah_transaksi}")
+        #print(f"Jumlah total transaksi = {jumlah_transaksi}")
+
+        # Populate the treeview with filtered transactions
+        for transaction in filtered_transactions:
+            self.transaction_tree.insert('', 'end', values=(
+                transaction['timestamp'],
+                transaction['food_name'],
+                transaction['quantity'],
+                transaction['category'],
+                transaction['color']
+            ))
+
+    def apply_date_filter(self):
+        """Filter transactions based on a date range."""
+        try:
+            # Ambil tanggal dari DateEntry
+            start_date = datetime.strptime(self.start_date_entry.get(), "%Y-%m-%d").date()
+            end_date = datetime.strptime(self.end_date_entry.get(), "%Y-%m-%d").date()
+
+            if start_date > end_date:
+                messagebox.showwarning("Error", "Tanggal mulai harus lebih awal dari tanggal akhir.")
+                return
+
+            self.filter_transactions_by_date(start_date, end_date)
+        except ValueError:
+            messagebox.showerror("Error", "Pilih tanggal dengan benar.")
 
     def reset_transaction_filter(self):
         # Clear filter entry
@@ -752,13 +859,78 @@ class FoodApp:
                     f"{transaction['timestamp']} - {transaction['food_name']} "
                     f"({transaction['quantity']}) - {transaction['category']} - {transaction['color']}")
 
-
     def update_listbox(self):
         self.food_listbox.delete(0, tk.END)
         for food in self.foods:
             category_name = self.categories.get(food['category_id'], 'Unknown')
             color_name = self.colors.get(food['color_id'], 'Unknown')
             self.food_listbox.insert(tk.END, f"{food['name']} - {category_name} - {color_name}")
+
+    def show_view_food_detail(self):
+        # Dapatkan item yang dipilih
+        selected = self.food_listbox.curselection()
+        if not selected:
+            messagebox.showwarning("Warning", "Pilih makanan untuk melihat detailnya!")
+            return
+
+        index = selected[0]
+        food = self.foods[index]
+
+        # Ambil informasi kategori dan warna
+        category_name = self.categories.get(food['category_id'], 'Unknown')
+        color_name = self.colors.get(food['color_id'], 'Unknown')
+
+        # Buat window baru
+        detail_window = tk.Toplevel(self.root)
+        detail_window.title(f"Detail Makanan: {food['name']}")
+        detail_window.geometry("400x500")
+
+        # Tampilkan informasi di window baru
+        tk.Label(detail_window, text="Detail Data Makanan", font=("Arial", 14, "bold")).pack(pady=10)
+
+        tk.Label(detail_window, text=f"ID: {food['id']}", font=("Arial", 12)).pack(pady=5)
+        tk.Label(detail_window, text=f"Nama: {food['name']}", font=("Arial", 12)).pack(pady=5)
+        tk.Label(detail_window, text=f"Kategori: {category_name}", font=("Arial", 12)).pack(pady=5)
+        tk.Label(detail_window, text=f"Warna: {color_name}", font=("Arial", 12)).pack(pady=5)
+
+        # Tampilkan gambar
+        img_label = tk.Label(detail_window)
+        img_label.pack(pady=10)
+
+        # Path untuk gambar default
+        default_image_path = "default_image.jpg"
+        image_path = f"images/{food['id']}.jpg"  # Gambar makanan spesifik
+
+        # Periksa apakah gambar makanan ada, jika tidak tampilkan gambar default
+        if not os.path.exists(image_path):
+            image_path = default_image_path
+
+        img = Image.open(image_path)
+        img.thumbnail((150, 150))
+        img = ImageTk.PhotoImage(img)
+        img_label.config(image=img)
+        img_label.image = img
+
+        # Tombol untuk mengubah gambar
+        def change_image():
+            file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg;*.png")])
+            if file_path:
+                os.makedirs("images", exist_ok=True)  # Buat folder jika belum ada
+                new_image_path = f"images/{food['id']}.jpg"
+                Image.open(file_path).save(new_image_path)  # Simpan gambar baru
+                # Perbarui tampilan
+                new_img = Image.open(new_image_path)
+                new_img.thumbnail((150, 150))
+                new_img = ImageTk.PhotoImage(new_img)
+                img_label.config(image=new_img)
+                img_label.image = new_img
+                messagebox.showinfo("Success", "Gambar berhasil diperbarui!")
+
+        tk.Button(detail_window, text="Ubah Gambar", command=change_image).pack(pady=10)
+
+        # Tombol tutup
+        tk.Button(detail_window, text="Tutup", command=detail_window.destroy).pack(pady=20)
+
 
     def get_id_by_value(self, dictionary, value):
         for key, val in dictionary.items():
@@ -783,29 +955,31 @@ class FoodApp:
                 messagebox.showwarning("Error", "Pilih kategori yang valid")
                 return
             
-            new_id = max([food['id'] for food in self.foods], default=0) + 1
-            
-            new_food = {
-                "id": new_id,
-                "name": name,
-                "category_id": category_id,
-                "color_id": color_id
-            }
-            
-            self.foods.append(new_food)
-            
-            # Save to file
+            if self.foodid is not None:
+                # Update existing food
+                food = next((f for f in self.foods if f['id'] == self.foodid), None)
+                if food:
+                    food.update({"name": name, "color_id": color_id, "category_id": category_id})
+            else:
+            # Add new food
+                new_id = max([food['id'] for food in self.foods], default=0) + 1
+                self.foods.append({"id": new_id, "name": name, "color_id": color_id, "category_id": category_id})
+
             if Baca.simpan_file_makanan("Data_Makanan.txt", self.foods):
                 self.update_listbox()
                 self.food_name_entry.delete(0, tk.END)
+                self.food_id = None  # Reset after saving
                 messagebox.showinfo("Success", "Data makanan berhasil disimpan")
             else:
                 messagebox.showerror("Error", "Gagal menyimpan data makanan")
+
         else:
             messagebox.showwarning("Error", "Semua field harus diisi!")
 
     def add_food(self):
         self.food_name_entry.delete(0, tk.END)
+        self.foodid = None  # Reset food_id for new entry
+
         if self.colors:
             self.food_color_var.set(list(self.colors.values())[0])
         if self.categories:
@@ -817,6 +991,7 @@ class FoodApp:
             index = selected[0]
             if 0 <= index < len(self.foods):
                 food = self.foods[index]
+                self.foodid = food['id']
                 
                 self.food_name_entry.delete(0, tk.END)
                 self.food_name_entry.insert(0, food['name'])
@@ -827,7 +1002,7 @@ class FoodApp:
                     self.food_category_var.set(self.categories[food['category_id']])
                 
                 # Remove the old entry
-                self.foods.pop(index)
+                #self.foods.pop(index)
                 self.update_listbox()
             else:
                 messagebox.showwarning("Error", "Invalid selection index")
@@ -847,7 +1022,7 @@ class FoodApp:
                     self.update_listbox()
                     
                     # Record transaction
-                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    timestamp = datetime.now().strftime("%Y-%m-%d")
                     category_name = self.categories.get(food['category_id'], 'Unknown')
                     color_name = self.colors.get(food['color_id'], 'Unknown')
                     
@@ -867,4 +1042,3 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = FoodApp(root)
     root.mainloop()
-  
