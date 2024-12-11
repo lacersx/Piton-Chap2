@@ -228,7 +228,8 @@ class FoodApp:
         self.add_food_frame.place(x=350, y=20, width=400, height=250)
         
         tk.Label(self.add_food_frame, text="Tambah Data Makanan", bg="#bdb2ff", font=("Arial", 12, "bold")).pack(pady=10)
-        
+        tk.Button(self.add_food_frame, text="Tambah Gambar", command=self.upload_image).pack(pady=5, side=tk.BOTTOM)
+
         # Food input fields
         tk.Label(self.add_food_frame, text="Nama Makanan:").pack()
         self.food_name_entry = tk.Entry(self.add_food_frame)
@@ -875,6 +876,7 @@ class FoodApp:
 
         index = selected[0]
         food = self.foods[index]
+        print(food)
 
         # Ambil informasi kategori dan warna
         category_name = self.categories.get(food['category_id'], 'Unknown')
@@ -893,38 +895,37 @@ class FoodApp:
         tk.Label(detail_window, text=f"Kategori: {category_name}", font=("Arial", 12)).pack(pady=5)
         tk.Label(detail_window, text=f"Warna: {color_name}", font=("Arial", 12)).pack(pady=5)
 
-        # Tampilkan gambar
-        img_label = tk.Label(detail_window)
-        img_label.pack(pady=10)
+        display = tk.Label(detail_window)
+        display.pack(pady=10, side=tk.BOTTOM)
 
-        # Path untuk gambar default
-        default_image_path = "default_image.jpg"
-        image_path = f"images/{food['id']}.jpg"  # Gambar makanan spesifik
-
-        # Periksa apakah gambar makanan ada, jika tidak tampilkan gambar default
-        if not os.path.exists(image_path):
-            image_path = default_image_path
-
-        img = Image.open(image_path)
-        img.thumbnail((150, 150))
-        img = ImageTk.PhotoImage(img)
-        img_label.config(image=img)
-        img_label.image = img
+        try:
+            img = Image.open(f"./gambar/{food['id']}.jpeg")
+            img.thumbnail((200,200))
+            img2 = ImageTk.PhotoImage(img)
+            display.config(image=img2)
+            display.image = img2
+        except:
+            img = Image.open(f"./gambar/default.jpeg")
+            img.thumbnail((200,200))
+            img2 = ImageTk.PhotoImage(img)
+            display.config(image=img2)
+            display.image = img2
 
         # Tombol untuk mengubah gambar
         def change_image():
-            file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg;*.png")])
-            if file_path:
-                os.makedirs("images", exist_ok=True)  # Buat folder jika belum ada
-                new_image_path = f"images/{food['id']}.jpg"
-                Image.open(file_path).save(new_image_path)  # Simpan gambar baru
-                # Perbarui tampilan
-                new_img = Image.open(new_image_path)
-                new_img.thumbnail((150, 150))
-                new_img = ImageTk.PhotoImage(new_img)
-                img_label.config(image=new_img)
-                img_label.image = new_img
-                messagebox.showinfo("Success", "Gambar berhasil diperbarui!")
+            # Memilih gambar dari file explorer
+            "open an imgae"    
+            try:   
+                file_path = filedialog.askopenfilename(initialdir= "",filetypes=[("Image files", "*.jpg *.jpeg *.png *.gif *.bmp")])
+                if file_path:
+                    self.selected_image_path = file_path
+                    #self.image_path_label.config(text=f"Gambar: {file_path.split('/')[-1]}")
+                    #print (file_path)
+                    shutil.copy2(file_path, f".\gambar\{food['id']}.jpeg")
+                    return file_path
+            
+            except FileNotFoundError:
+                messagebox.showerror("Unfound file", "The selected file was not found.")
 
         tk.Button(detail_window, text="Ubah Gambar", command=change_image).pack(pady=10)
 
@@ -1037,6 +1038,21 @@ class FoodApp:
                 messagebox.showwarning("Error", "Invalid selection index")
         else:
             messagebox.showwarning("Selection Error", "Pilih makanan untuk dihapus")
+
+    def upload_image(self):
+        # Memilih gambar dari file explorer
+        "open an imgae"    
+        try:   
+            file_path = filedialog.askopenfilename(initialdir= "",filetypes=[("Image files", "*.jpg *.jpeg *.png *.gif *.bmp")])
+            if file_path:
+                self.selected_image_path = file_path
+                #self.image_path_label.config(text=f"Gambar: {file_path.split('/')[-1]}")
+                #print (file_path)
+                shutil.copy2(file_path, f".\gambar\{self.foodid}.jpeg")
+                return file_path
+        
+        except FileNotFoundError:
+            messagebox.showerror("Unfound file", "The selected file was not found.")
 
 if __name__ == "__main__":
     root = tk.Tk()
