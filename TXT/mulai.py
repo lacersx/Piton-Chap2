@@ -1,7 +1,11 @@
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import messagebox, ttk, filedialog
 from datetime import datetime
-from tkcalendar import Calendar
+from tkcalendar import Calendar, DateEntry
+import os
+from PIL import Image, ImageTk
+import shutil
+import pathlib
 
 class Baca:
     @staticmethod
@@ -219,13 +223,14 @@ class FoodApp:
         tk.Button(self.food_list_frame, text="Menu Kategori", command=self.show_category_menu).pack(pady=5)
         tk.Button(self.food_list_frame, text="Menu Warna", command=self.show_color_frame).pack(pady=5)
         tk.Button(self.food_list_frame, text="Menu Transaksi", command=self.show_transaction_menu).pack(pady=5)
+        tk.Button(self.food_list_frame, text= "lihat detail", command=self.show_view_food_detail). pack(pady=5) 
 
         # Add Food Frame
         self.add_food_frame = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
         self.add_food_frame.place(x=350, y=20, width=400, height=250)
         
         tk.Label(self.add_food_frame, text="Tambah Data Makanan", bg="#bdb2ff", font=("Arial", 12, "bold")).pack(pady=10)
-        
+
         # Food input fields
         tk.Label(self.add_food_frame, text="Nama Makanan:").pack()
         self.food_name_entry = tk.Entry(self.add_food_frame)
@@ -543,7 +548,7 @@ class FoodApp:
     def show_transaction_menu(self):
         self.transaction_window = tk.Toplevel(self.root)
         self.transaction_window.title("Menu Transaksi")
-        self.transaction_window.geometry("600x500")
+        self.transaction_window.geometry("900x450")
 
         # Create notebook for tabs
         notebook = ttk.Notebook(self.transaction_window)
@@ -602,6 +607,17 @@ class FoodApp:
         tk.Button(filter_frame, text="Cari", command=self.filter_transactions).pack(side=tk.LEFT, padx=5)
         tk.Button(filter_frame, text="Reset", command=self.reset_transaction_filter).pack(side=tk.LEFT, padx=5)
 
+        # Date range filter with DateEntry
+        tk.Label(filter_frame, text="Tanggal Mulai:").pack(side=tk.LEFT, padx=5)
+        self.start_date_entry = DateEntry(filter_frame, width=12, background='darkblue', foreground='white', borderwidth=2, date_pattern='yyyy-MM-dd')
+        self.start_date_entry.pack(side=tk.LEFT, padx=5)
+
+        tk.Label(filter_frame, text="Tanggal Akhir:").pack(side=tk.LEFT, padx=5)
+        self.end_date_entry = DateEntry(filter_frame, width=12, background='darkblue', foreground='white', borderwidth=2, date_pattern='yyyy-MM-dd')
+        self.end_date_entry.pack(side=tk.LEFT, padx=5)
+
+        tk.Button(filter_frame, text="Filter Tanggal", command=self.apply_date_filter).pack(side=tk.LEFT, padx=5)
+                
         # Treeview for transactions
         self.transaction_tree = ttk.Treeview(history_frame, columns=("Tanggal", "Makanan", "Jumlah", "Kategori", "Warna"), show='headings')
 
@@ -629,6 +645,11 @@ class FoodApp:
         # Delete transaction button
         tk.Button(history_frame, text="Hapus Transaksi Terpilih", 
                  command=self.delete_transaction).pack(pady=10)
+        
+        # Label untuk jumlah total transaksi
+        self.total_quantity_var = tk.StringVar(value="Total Quantity: 0")
+        self.total_quantity_label = tk.Label(history_frame, textvariable=self.total_quantity_var, font=("Arial", 10, "bold"))
+        self.total_quantity_label.pack(pady=10)
 
         # Populate treeview
         self.update_transaction_list()
@@ -714,6 +735,10 @@ class FoodApp:
 
     def update_transaction_list(self):
         self.filter_transactions()
+        self.filter_transactions_by_date(
+            datetime.min.date(),  # Semua data tanpa batas awal
+            datetime.max.date()   # Semua data tanpa batas akhir
+        )
         # Clear existing items
         '''for item in baca.transaction_tree.get_children():
             self.transaction_tree.delete(item)
@@ -728,6 +753,7 @@ class FoodApp:
                 transaction['color']
             ))
 '''
+
     def sort_column(self, col, reverse):
         # Get the data to sort
         data = [(self.transaction_tree.set(child, col), child) for child in self.transaction_tree.get_children('')]
@@ -756,12 +782,14 @@ class FoodApp:
                 filter_text in transaction['category'].lower() or 
                 filter_text in transaction['color'].lower())
         ]
-        #print (filtered_transactions)
+
+        '''#print (filtered_transactions)
         jumlah_transaksi =0
         for ft in filtered_transactions:
            jumlah_transaksi += int(ft['quantity'])
  
-        print("jumlah total transaksi = " + str(jumlah_transaksi))
+        print("jumlah total transaksi = " + str(jumlah_transaksi))'''
+        
         # Populate filtered transactions
         for transaction in filtered_transactions:
             self.transaction_tree.insert('', 'end', values=(
@@ -771,6 +799,52 @@ class FoodApp:
                 transaction['category'], 
                 transaction['color']
             ))
+
+    def filter_transactions_by_date(self, start_date, end_date):
+        """Filter transactions within a specific date range."""
+        # Clear existing items in the treeview
+        for item in self.transaction_tree.get_children():
+            self.transaction_tree.delete(item)
+
+        # Filter transactions based on date range
+        filtered_transactions = [
+            transaction for transaction in self.transaction_history
+            if start_date <= datetime.strptime(transaction['timestamp'], "%Y-%m-%d").date() <= end_date
+        ]
+
+        # Hitung jumlah total transaksi
+        jumlah_transaksi = 0
+        for ft in filtered_transactions:
+            jumlah_transaksi += int(ft['quantity'])
+
+        # Perbarui label total quantity
+        self.total_quantity_var.set(f"Total Quantity: {jumlah_transaksi}")
+        #print(f"Jumlah total transaksi = {jumlah_transaksi}")
+
+        # Populate the treeview with filtered transactions
+        for transaction in filtered_transactions:
+            self.transaction_tree.insert('', 'end', values=(
+                transaction['timestamp'],
+                transaction['food_name'],
+                transaction['quantity'],
+                transaction['category'],
+                transaction['color']
+            ))
+
+    def apply_date_filter(self):
+        """Filter transactions based on a date range."""
+        try:
+            # Ambil tanggal dari DateEntry
+            start_date = datetime.strptime(self.start_date_entry.get(), "%Y-%m-%d").date()
+            end_date = datetime.strptime(self.end_date_entry.get(), "%Y-%m-%d").date()
+
+            if start_date > end_date:
+                messagebox.showwarning("Error", "Tanggal mulai harus lebih awal dari tanggal akhir.")
+                return
+
+            self.filter_transactions_by_date(start_date, end_date)
+        except ValueError:
+            messagebox.showerror("Error", "Pilih tanggal dengan benar.")
 
     def reset_transaction_filter(self):
         # Clear filter entry
@@ -793,6 +867,71 @@ class FoodApp:
             category_name = self.categories.get(food['category_id'], 'Unknown')
             color_name = self.colors.get(food['color_id'], 'Unknown')
             self.food_listbox.insert(tk.END, f"{food['name']} - {category_name} - {color_name}")
+
+    def show_view_food_detail(self):
+        # Dapatkan item yang dipilih
+        selected = self.food_listbox.curselection()
+        if not selected:
+            messagebox.showwarning("Warning", "Pilih makanan untuk melihat detailnya!")
+            return
+
+        index = selected[0]
+        food = self.foods[index]
+
+        # Ambil informasi kategori dan warna
+        category_name = self.categories.get(food['category_id'], 'Unknown')
+        color_name = self.colors.get(food['color_id'], 'Unknown')
+
+        # Buat window baru
+        detail_window = tk.Toplevel(self.root)
+        detail_window.title(f"Detail Makanan: {food['name']}")
+        detail_window.geometry("400x500")
+
+        # Tampilkan informasi di window baru
+        tk.Label(detail_window, text="Detail Data Makanan", font=("Arial", 14, "bold")).pack(pady=10)
+
+        tk.Label(detail_window, text=f"ID: {food['id']}", font=("Arial", 12)).pack(pady=5)
+        tk.Label(detail_window, text=f"Nama: {food['name']}", font=("Arial", 12)).pack(pady=5)
+        tk.Label(detail_window, text=f"Kategori: {category_name}", font=("Arial", 12)).pack(pady=5)
+        tk.Label(detail_window, text=f"Warna: {color_name}", font=("Arial", 12)).pack(pady=5)
+
+        display = tk.Label(detail_window)
+        display.pack(pady=10, side=tk.BOTTOM)
+
+        try:
+            img = Image.open(f"./gambar/{food['id']}.jpeg")
+            img.thumbnail((200,200))
+            img2 = ImageTk.PhotoImage(img)
+            display.config(image=img2)
+            display.image = img2
+        except:
+            img = Image.open(f"./gambar/default.jpeg")
+            img.thumbnail((200,200))
+            img2 = ImageTk.PhotoImage(img)
+            display.config(image=img2)
+            display.image = img2
+
+        # Tombol untuk mengubah gambar
+        def change_image():
+            # Memilih gambar dari file explorer
+            "open an imgae"    
+            try:   
+                file_path = filedialog.askopenfilename(initialdir= "",filetypes=[("Image files", "*.jpg *.jpeg *.png *.gif *.bmp")])
+                if file_path:
+                    self.selected_image_path = file_path
+                    #self.image_path_label.config(text=f"Gambar: {file_path.split('/')[-1]}")
+                    #print (file_path)
+                    shutil.copy2(file_path, f".\gambar\{food['id']}.jpeg")
+                    return file_path
+            
+            except FileNotFoundError:
+                messagebox.showerror("Unfound file", "The selected file was not found.")
+
+        tk.Button(detail_window, text="Ubah Gambar", command=change_image).pack(pady=10)
+
+        # Tombol tutup
+        tk.Button(detail_window, text="Tutup", command=detail_window.destroy).pack(pady=20)
+
 
     def get_id_by_value(self, dictionary, value):
         for key, val in dictionary.items():
