@@ -168,6 +168,7 @@ class FoodApp:
         self.foods = []      # Will be populated from file
         self.categories = {} # Will be populated from file
         self.transaction_history = []
+        self.foodid = None
         
         # Initialize category window and listboxes as None
         self.category_window = None
