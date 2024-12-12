@@ -1,3 +1,0 @@
-ID:Kategori
-1:snack
-2:karbohidrat

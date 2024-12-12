@@ -1,3 +1,0 @@
-ID:Warna
-1:merah muda
-2:putih

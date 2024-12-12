@@ -225,7 +225,7 @@ class FoodApp:
 
         # Add Food Frame
         self.add_food_frame = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
-        self.add_food_frame.place(x=350, y=20, width=400, height=200)
+        self.add_food_frame.place(x=350, y=20, width=400, height=300)
         
         tk.Label(self.add_food_frame, text="Tambah Data Makanan", bg="#bdb2ff", font=("Arial", 12, "bold")).pack(pady=10)
 
@@ -253,7 +253,6 @@ class FoodApp:
         self.food_color_menu.pack()
 
         tk.Button(self.add_food_frame, text="Simpan Makanan", command=self.save_food).pack(pady=10)
-        tk.Button(self.add_food_frame, text="Tambah Gambar", command=self.upload_image).pack(pady=5)
 
     def update_category_menu(self):
         menu = self.food_category_menu["menu"]
@@ -1037,21 +1036,6 @@ class FoodApp:
                 messagebox.showwarning("Error", "Invalid selection index")
         else:
             messagebox.showwarning("Selection Error", "Pilih makanan untuk dihapus")
-
-    def upload_image(self):
-        # Memilih gambar dari file explorer
-        "open an imgae"    
-        try:   
-            file_path = filedialog.askopenfilename(initialdir= "",filetypes=[("Image files", "*.jpg *.jpeg *.png *.gif *.bmp")])
-            if file_path:
-                self.selected_image_path = file_path
-                #self.image_path_label.config(text=f"Gambar: {file_path.split('/')[-1]}")
-                #print (file_path)
-                shutil.copy2(file_path, f".\gambar\{self.foodid}.jpeg")
-                return file_path
-        
-        except FileNotFoundError:
-            messagebox.showerror("Unfound file", "The selected file was not found.")
 
 if __name__ == "__main__":
     root = tk.Tk()

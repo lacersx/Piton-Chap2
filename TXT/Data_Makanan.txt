@@ -8,3 +8,4 @@ ID:Nama:KategoriID:WarnaID
 7:baru:2:2
 8:bihun:1:1
 9:ayam:1:4
+10:s:1:1
