@@ -225,10 +225,9 @@ class FoodApp:
 
         # Add Food Frame
         self.add_food_frame = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
-        self.add_food_frame.place(x=350, y=20, width=400, height=250)
+        self.add_food_frame.place(x=350, y=20, width=400, height=350)
         
         tk.Label(self.add_food_frame, text="Tambah Data Makanan", bg="#bdb2ff", font=("Arial", 12, "bold")).pack(pady=10)
-        tk.Button(self.add_food_frame, text="Tambah Gambar", command=self.upload_image).pack(pady=5, side=tk.BOTTOM)
 
         # Food input fields
         tk.Label(self.add_food_frame, text="Nama Makanan:").pack()
@@ -254,6 +253,7 @@ class FoodApp:
         self.food_color_menu.pack()
 
         tk.Button(self.add_food_frame, text="Simpan Makanan", command=self.save_food).pack(pady=10)
+        tk.Button(self.add_food_frame, text="Tambah Gambar", command=self.upload_image).pack(pady=5)
 
     def update_category_menu(self):
         menu = self.food_category_menu["menu"]

@@ -5,3 +5,5 @@ ID:Nama:KategoriID:WarnaID
 4:Mie:3:2
 5:keju:1:4
 6:ikan:1:2
+7:baru:2:2
+8:bihun:1:1
