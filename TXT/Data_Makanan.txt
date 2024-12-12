@@ -7,3 +7,4 @@ ID:Nama:KategoriID:WarnaID
 6:ikan:1:2
 7:baru:2:2
 8:bihun:1:1
+9:ayam:1:4
