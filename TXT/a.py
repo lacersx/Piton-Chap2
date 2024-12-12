@@ -225,7 +225,7 @@ class FoodApp:
 
         # Add Food Frame
         self.add_food_frame = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
-        self.add_food_frame.place(x=350, y=20, width=400, height=350)
+        self.add_food_frame.place(x=350, y=20, width=400, height=200)
         
         tk.Label(self.add_food_frame, text="Tambah Data Makanan", bg="#bdb2ff", font=("Arial", 12, "bold")).pack(pady=10)
 
@@ -876,7 +876,6 @@ class FoodApp:
 
         index = selected[0]
         food = self.foods[index]
-        print(food)
 
         # Ambil informasi kategori dan warna
         category_name = self.categories.get(food['category_id'], 'Unknown')
