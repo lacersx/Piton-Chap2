@@ -1132,11 +1132,8 @@ class TransactionApp:
 # Jalankan Aplikasi
 app = TransactionApp()
 
-
-    # Tampilkan grafik
-    plt.show()
-
-
+# Tampilkan grafik
+plt.show()
 
 if __name__ == "__main__":
     root = tk.Tk()
