@@ -231,6 +231,19 @@ class FoodApp:
         
         tk.Label(self.add_food_frame, text="Tambah Data Makanan", bg="#bdb2ff", font=("Arial", 12, "bold")).pack(pady=10)
 
+        # Tambahkan frame untuk grafik
+        self.graph_frame = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
+        self.graph_frame.place(x=350, y=300, width=400, height=250)
+
+        tk.Label(self.graph_frame, text="Grafik Transaksi", bg="#bdb2ff", font=("Arial", 12, "bold")).pack(pady=10)
+
+        # Canvas untuk grafik
+        self.graph_canvas = tk.Canvas(self.graph_frame, width=360, height=200, bg="white")
+        self.graph_canvas.pack(pady=10)
+
+        # Gambar grafik awal
+        self.draw_graph()
+
         # Food input fields
         tk.Label(self.add_food_frame, text="Nama Makanan:").pack()
         self.food_name_entry = tk.Entry(self.add_food_frame)
@@ -703,6 +716,7 @@ class FoodApp:
                 messagebox.showerror("Error", "Gagal menyimpan transaksi")
         else:
             messagebox.showerror("Error", "Makanan tidak ditemukan")
+        self.draw_graph
 
     def delete_transaction(self):
         selected_item = self.transaction_tree.selection()
@@ -732,6 +746,7 @@ class FoodApp:
             messagebox.showinfo("Success", "Transaksi berhasil dihapus")
         else:
             messagebox.showerror("Error", "Gagal menyimpan perubahan transaksi")
+        self.draw_graph
 
     def update_transaction_list(self):
         self.filter_transactions()
@@ -753,6 +768,72 @@ class FoodApp:
                 transaction['color']
             ))
 '''
+
+    def draw_graph(self):
+        # Ambil data dari file transaksi
+        transaction_data = self.prepare_graph_data()
+
+        if not transaction_data:
+            return  # Jika tidak ada data, jangan menggambar
+
+        # Canvas dan Frame ukuran
+        x_offset = 40  # Margin kiri
+        y_offset = 180  # Margin bawah
+        graph_width = 220  # Lebar grafik agar pas di frame
+        graph_height = 140  # Tinggi grafik agar pas di frame
+
+        # Cari nilai maksimal untuk skala
+        max_quantity = max([q for _, q in transaction_data], default=1)
+        max_dates = len(transaction_data)
+
+        # Skala kecil agar grafik lebih rapi
+        y_scale = graph_height / max_dates if max_dates > 1 else graph_height
+        x_scale = graph_width / max_quantity if max_quantity > 0 else graph_width
+
+        # Bersihkan canvas
+        self.graph_canvas.delete("all")
+
+        # Gambar sumbu X dan Y
+        self.graph_canvas.create_line(x_offset, y_offset, x_offset + graph_width, y_offset, width=2)  # Sumbu X
+        self.graph_canvas.create_line(x_offset, y_offset, x_offset, y_offset - graph_height, width=2)  # Sumbu Y
+
+        # Plot data
+        for i, (date, quantity) in enumerate(transaction_data):
+            x = x_offset + quantity * x_scale
+            y = y_offset - i * y_scale
+
+            # Titik data
+            self.graph_canvas.create_oval(x - 2, y - 2, x + 2, y + 2, fill="green")
+
+            # Garis antar titik
+            if i > 0:
+                prev_date, prev_quantity = transaction_data[i - 1]
+                x_prev = x_offset + prev_quantity * x_scale
+                y_prev = y_offset - (i - 1) * y_scale
+                self.graph_canvas.create_line(x_prev, y_prev, x, y, fill="blue", width=1)
+
+            # Label tanggal di sumbu Y
+            self.graph_canvas.create_text(x_offset - 10, y, text=date, anchor=tk.E, font=("Arial", 7))
+
+        # Label jumlah di sumbu X
+        for i in range(0, max_quantity + 1, max(1, max_quantity // 5)):
+            x = x_offset + i * x_scale
+            self.graph_canvas.create_text(x, y_offset + 10, text=str(i), anchor=tk.N, font=("Arial", 7))
+
+    def prepare_graph_data(self):
+        """Ambil data tanggal dan quantity dari transaction_history."""
+        data = []
+        for transaction in self.transaction_history:
+            try:
+                date = transaction['timestamp']  # Ambil tanggal
+                quantity = int(transaction['quantity'])  # Ambil jumlah
+                data.append((date, quantity))
+            except ValueError:
+                continue
+
+        # Sort berdasarkan tanggal
+        data.sort(key=lambda x: x[0])
+        return data
 
     def sort_column(self, col, reverse):
         # Get the data to sort
