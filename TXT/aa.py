@@ -168,7 +168,7 @@ class FoodApp:
         self.foods = []      # Will be populated from file
         self.categories = {} # Will be populated from file
         self.transaction_history = []
-        
+
         self.foodid = None
         
         # Initialize category window and listboxes as None
@@ -227,9 +227,22 @@ class FoodApp:
 
         # Add Food Frame
         self.add_food_frame = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
-        self.add_food_frame.place(x=350, y=20, width=400, height=300)
+        self.add_food_frame.place(x=350, y=20, width=400, height=250)
         
         tk.Label(self.add_food_frame, text="Tambah Data Makanan", bg="#bdb2ff", font=("Arial", 12, "bold")).pack(pady=10)
+
+        # Tambahkan frame untuk grafik
+        self.graph_frame = tk.Frame(self.root, bg="#e0f7fa", bd=2, relief="groove")
+        self.graph_frame.place(x=350, y=300, width=400, height=250)
+
+        tk.Label(self.graph_frame, text="Grafik Transaksi", bg="#e0f7fa", font=("Arial", 12, "bold")).pack(pady=10)
+
+        # Canvas untuk grafik
+        self.graph_canvas = tk.Canvas(self.graph_frame, width=360, height=200, bg="white")
+        self.graph_canvas.pack(pady=10)
+
+        # Gambar grafik awal
+        self.draw_graph()
 
         # Food input fields
         tk.Label(self.add_food_frame, text="Nama Makanan:").pack()
@@ -255,15 +268,6 @@ class FoodApp:
         self.food_color_menu.pack()
 
         tk.Button(self.add_food_frame, text="Simpan Makanan", command=self.save_food).pack(pady=10)
-        
-         # Add Food Frame
-        self.line_graph = tk.Frame(self.root, bg="#bdb2ff", bd=2, relief="groove")
-        self.line_graph(x=350, y=50, width=400, height=300)
-        
-        tk.Label(self.line_graph, text="Tambah Data Makanan", bg="#bdb2ff", font=("Arial", 12, "bold")).pack(pady=10)
-        # Add LineGraphApp to the same frame
-        data_points = [(10, 20), (20, 50), (30, 35), (40, 90), (50, 60), (60, 110)]
-        self.line_graph = LineGraphApp(self.add_food_frame, data_points)
 
     def update_category_menu(self):
         menu = self.food_category_menu["menu"]
@@ -712,6 +716,7 @@ class FoodApp:
                 messagebox.showerror("Error", "Gagal menyimpan transaksi")
         else:
             messagebox.showerror("Error", "Makanan tidak ditemukan")
+        self.draw_graph
 
     def delete_transaction(self):
         selected_item = self.transaction_tree.selection()
@@ -741,6 +746,7 @@ class FoodApp:
             messagebox.showinfo("Success", "Transaksi berhasil dihapus")
         else:
             messagebox.showerror("Error", "Gagal menyimpan perubahan transaksi")
+        self.draw_graph
 
     def update_transaction_list(self):
         self.filter_transactions()
@@ -762,6 +768,73 @@ class FoodApp:
                 transaction['color']
             ))
 '''
+
+    def draw_graph(self):
+        # Ambil data dari file transaksi
+        transaction_data = self.prepare_graph_data()
+
+        if not transaction_data:
+            return  # Jika tidak ada data, jangan menggambar
+
+        # Canvas dan Frame ukuran
+        x_offset = 40  # Margin kiri
+        y_offset = 180  # Margin bawah
+        graph_width = 220  # Lebar grafik agar pas di frame
+        graph_height = 140  # Tinggi grafik agar pas di frame
+
+        # Cari nilai maksimal untuk skala
+        max_quantity = max([q for _, q in transaction_data], default=1)
+        max_dates = len(transaction_data)
+
+        # Skala kecil agar grafik lebih rapi
+        y_scale = graph_height / max_dates if max_dates > 1 else graph_height
+        x_scale = graph_width / max_quantity if max_quantity > 0 else graph_width
+
+        # Bersihkan canvas
+        self.graph_canvas.delete("all")
+
+        # Gambar sumbu X dan Y
+        self.graph_canvas.create_line(x_offset, y_offset, x_offset + graph_width, y_offset, width=2)  # Sumbu X
+        self.graph_canvas.create_line(x_offset, y_offset, x_offset, y_offset - graph_height, width=2)  # Sumbu Y
+
+        # Plot data
+        for i, (date, quantity) in enumerate(transaction_data):
+            x = x_offset + quantity * x_scale
+            y = y_offset - i * y_scale
+
+            # Titik data
+            self.graph_canvas.create_oval(x - 2, y - 2, x + 2, y + 2, fill="green")
+
+            # Garis antar titik
+            if i > 0:
+                prev_date, prev_quantity = transaction_data[i - 1]
+                x_prev = x_offset + prev_quantity * x_scale
+                y_prev = y_offset - (i - 1) * y_scale
+                self.graph_canvas.create_line(x_prev, y_prev, x, y, fill="blue", width=1)
+
+            # Label tanggal di sumbu Y
+            self.graph_canvas.create_text(x_offset - 10, y, text=date, anchor=tk.E, font=("Arial", 7))
+
+        # Label jumlah di sumbu X
+        for i in range(0, max_quantity + 1, max(1, max_quantity // 5)):
+            x = x_offset + i * x_scale
+            self.graph_canvas.create_text(x, y_offset + 10, text=str(i), anchor=tk.N, font=("Arial", 7))
+
+    def prepare_graph_data(self):
+        """Ambil data tanggal dan quantity dari transaction_history."""
+        data = []
+        for transaction in self.transaction_history:
+            try:
+                date = transaction['timestamp']  # Ambil tanggal
+                quantity = int(transaction['quantity'])  # Ambil jumlah
+                data.append((date, quantity))
+            except ValueError:
+                continue
+
+        # Sort berdasarkan tanggal
+        data.sort(key=lambda x: x[0])
+        return data
+
 
     def sort_column(self, col, reverse):
         # Get the data to sort
@@ -907,39 +980,56 @@ class FoodApp:
         display = tk.Label(detail_window)
         display.pack(pady=10, side=tk.BOTTOM)
 
+        def load_and_resize_image(image_path, size=(200, 200)):
+            img = Image.open(image_path)
+            img.thumbnail(size, Image.LANCZOS)
+
+            # Center the thumbnail if it's smaller than the size
+            thumb = Image.new('RGB', size, (255, 255, 255))
+            img_pos = ((size[0] - img.size[0]) // 2, (size[1] - img.size[1]) // 2)
+            thumb.paste(img, img_pos)
+            return ImageTk.PhotoImage(thumb)
+
         try:
-            img = Image.open(f"./gambar/{food['id']}.jpeg")
-            img.thumbnail((200,200))
-            img2 = ImageTk.PhotoImage(img)
+            img_path = f"./gambar/{food['id']}.jpeg"
+            img2 = load_and_resize_image(img_path)
             display.config(image=img2)
             display.image = img2
         except:
-            img = Image.open(f"./gambar/default.jpeg")
-            img.thumbnail((200,200))
-            img2 = ImageTk.PhotoImage(img)
+            img_path = f"./gambar/default.jpeg"
+            img2 = load_and_resize_image(img_path)
             display.config(image=img2)
             display.image = img2
 
         # Tombol untuk mengubah gambar
         def change_image():
             # Memilih gambar dari file explorer
-            "open an imgae"    
-            try:   
-                file_path = filedialog.askopenfilename(initialdir= "",filetypes=[("Image files", "*.jpg *.jpeg *.png *.gif *.bmp")])
+            try:
+                file_path = filedialog.askopenfilename(
+                    filetypes=[("Image files", "*.jpg;*.jpeg;*.png;*.bmp;*.gif")]
+                )
                 if file_path:
-                    self.selected_image_path = file_path
-                    #self.image_path_label.config(text=f"Gambar: {file_path.split('/')[-1]}")
-                    #print (file_path)
-                    shutil.copy2(file_path, f".\gambar\{food['id']}.jpeg")
-                    return file_path
-            
-            except FileNotFoundError:
-                messagebox.showerror("Unfound file", "The selected file was not found.")
+                    # Buka gambar menggunakan PIL
+                    img = Image.open(file_path)
+                    
+                    # Ubah ukuran gambar menjadi 200x200
+                    new_size = (200, 200)
+                    img.thumbnail(new_size, Image.LANCZOS)
+                    
+                    # Simpan gambar yang diubah ukurannya ke direktori gambar dengan nama yang sesuai
+                    img.save(f"./gambar/{food['id']}.jpeg")
+                    
+                    # Tampilkan gambar yang diubah ukurannya
+                    img2 = load_and_resize_image(f"./gambar/{food['id']}.jpeg")
+                    display.config(image=img2)
+                    display.image = img2
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to process image: {e}")
 
         tk.Button(detail_window, text="Ubah Gambar", command=change_image).pack(pady=10)
 
-        # Tombol tutup
-        tk.Button(detail_window, text="Tutup", command=detail_window.destroy).pack(pady=20)
+        # Tombol tutup dengan padding yang sesuai
+        tk.Button(detail_window, text="Tutup", command=detail_window.destroy).pack(pady=10)
 
 
     def get_id_by_value(self, dictionary, value):
@@ -1047,35 +1137,6 @@ class FoodApp:
                 messagebox.showwarning("Error", "Invalid selection index")
         else:
             messagebox.showwarning("Selection Error", "Pilih makanan untuk dihapus")
-
-class LineGraphApp:
-    def __init__(self, parent, data):
-        self.parent = parent
-        self.data = data
-        
-        self.canvas = tk.Canvas(parent, width=400, height=300, bg="white")
-        self.canvas.pack()
-        
-        self.draw_line_graph()
-
-    def draw_line_graph(self):
-        x_scale = 4  # Scale for x-axis
-        y_scale = 2  # Scale for y-axis
-        x_offset = 30
-        y_offset = 250
-        
-        # Draw x and y axes
-        self.canvas.create_line(x_offset, y_offset, x_offset + 360, y_offset, width=2)
-        self.canvas.create_line(x_offset, y_offset, x_offset, y_offset - 250, width=2)
-        
-        # Draw data points and lines
-        for i in range(len(self.data) - 1):
-            x1, y1 = self.data[i]
-            x2, y2 = self.data[i + 1]
-            x1_scaled, y1_scaled = x1 * x_scale + x_offset, y_offset - y1 * y_scale
-            x2_scaled, y2_scaled = x2 * x_scale + x_offset, y_offset - y2 * y_scale
-            self.canvas.create_oval(x1_scaled - 3, y1_scaled - 3, x1_scaled + 3, y1_scaled + 3, fill="green")
-            self.canvas.create_line(x1_scaled, y1_scaled, x2_scaled, y2_scaled, fill="blue", width=2)
 
 if __name__ == "__main__":
     root = tk.Tk()
